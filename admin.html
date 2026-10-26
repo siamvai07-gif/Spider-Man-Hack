@@ -1282,7 +1282,7 @@
             </div>
         </div>
 
-        <button id="login-btn" class="btn-sync-cloud" style="width: 100%; justify-content: center; margin-top: 14px;">
+        <button id="login-btn" onclick="performLogin()" class="btn-sync-cloud" style="width: 100%; justify-content: center; margin-top: 14px;">
             <i class="fa-solid fa-unlock-keyhole"></i> ENGAGE COMMAND
         </button>
 
@@ -1608,13 +1608,6 @@
         // ==========================================================
         // SPIDER-MAN 3D FACE EMOTION CONTROLLER & CHARACTER ENGINE
         // ==========================================================
-        const spideyMask = document.getElementById('spidey-mask');
-        const spideyEmotionLabel = document.getElementById('spidey-emotion-label');
-        const emotions = ['neutral', 'smile', 'angry', 'cry'];
-        let currentEmotionIndex = 0;
-        let currentEmotion = 'neutral';
-        let blinkTimer = null;
-
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function initAudio() {
@@ -1657,9 +1650,6 @@
             }
         }
 
-        // ==========================================================
-        // SPIDER-MAN 3D FACE EMOTION CONTROLLER & CHARACTER ENGINE
-        // ==========================================================
         const spideyMask = document.getElementById('spidey-mask');
         const spideyEmotionLabel = document.getElementById('spidey-emotion-label');
         const emotions = ['neutral', 'smile', 'angry', 'cry', 'thinking', 'surprised', 'alert'];
@@ -2538,7 +2528,8 @@
 
         function performLogin() {
             initAudio();
-            if (adminPass.value.trim() === REQUIRED_ADMIN_KEY) {
+            const passInput = adminPass ? adminPass.value.trim() : '';
+            if (passInput === REQUIRED_ADMIN_KEY || passInput.toUpperCase() === REQUIRED_ADMIN_KEY.toUpperCase()) {
                 setSpideyEmotion('smile');
                 if (window.spideyCharacter) {
                     window.spideyCharacter.trigger('success');
@@ -2552,7 +2543,7 @@
                     console.warn(e);
                 }
 
-                loginStatus.innerText = '';
+                if (loginStatus) loginStatus.innerText = '';
                 if (loginScreen) {
                     loginScreen.style.transform = 'scale(1.05) translateZ(30px)';
                     loginScreen.style.boxShadow = '0 0 70px rgba(0, 255, 204, 0.8), 0 0 100px rgba(230, 36, 41, 0.7)';
@@ -2569,7 +2560,7 @@
                 }
                 playSound('off');
 
-                loginStatus.innerText = 'Access Denied: Invalid Passkey';
+                if (loginStatus) loginStatus.innerText = 'Access Denied: Invalid Passkey';
                 if (loginScreen) {
                     loginScreen.style.animation = 'none';
                     void loginScreen.offsetWidth;
@@ -2577,6 +2568,7 @@
                 }
             }
         }
+        window.performLogin = performLogin;
 
         function performLogout() {
             try {

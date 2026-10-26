@@ -1,11 +1,28 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, Plugin} from 'vite';
+
+function adminDevServerPlugin(): Plugin {
+  return {
+    name: 'admin-dev-rewrite',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.url) {
+          const pathname = req.url.split('?')[0];
+          if (pathname === '/admin' || pathname === '/admin/') {
+            req.url = req.url.replace(pathname, '/admin.html');
+          }
+        }
+        next();
+      });
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), adminDevServerPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
