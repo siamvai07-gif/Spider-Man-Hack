@@ -1,0 +1,3470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SPIDER-CORE // Cybernetic Radar HUD</title>
+    <meta name="description" content="Cinematic Spider-Man Inspired Quantum Radar & Live Telemetry HUD" />
+    <meta property="og:title" content="SPIDER-CORE // Cybernetic Radar HUD" />
+    <meta property="og:description" content="Cinematic Spider-Man Inspired Quantum Radar" />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,700;0,800;0,900;1,800&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-base: #04060b;
+            --bg-card: rgba(10, 14, 24, 0.85);
+            --bg-elevated: rgba(14, 20, 36, 0.92);
+            --bg-input: rgba(6, 9, 16, 0.95);
+            --spidey-crimson: #e62429;
+            --spidey-red-glow: #ff2a3b;
+            --spidey-cobalt: #0284c7;
+            --spidey-electric: #00b4d8;
+            --spidey-blue-glow: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --text-pure: #ffffff;
+            --text-heading: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-spidey: rgba(230, 36, 41, 0.45);
+            --border-electric: rgba(0, 180, 216, 0.45);
+            --gradient-spidey: linear-gradient(135deg, #e62429 0%, #a855f7 50%, #0284c7 100%);
+            --gradient-red-cobalt: linear-gradient(135deg, #e62429 0%, #0284c7 100%);
+            --shadow-cinematic: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 40px rgba(230, 36, 41, 0.22), 0 0 60px rgba(2, 132, 199, 0.15);
+            --shadow-web: 0 0 25px rgba(230, 36, 41, 0.4);
+            --radius-hud: 22px;
+            --radius-btn: 14px;
+            --radius-pill: 9999px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-base);
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', -apple-system, sans-serif;
+            font-weight: 600;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Cinematic Spider-Man Dual-Tone Aurora & Ambient Atmosphere */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: -40%;
+            width: 180%;
+            height: 180%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(230, 36, 41, 0.2) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(2, 132, 199, 0.2) 0%, transparent 45%),
+                radial-gradient(circle at 80% 20%, rgba(255, 42, 59, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 20% 85%, rgba(0, 180, 216, 0.14) 0%, transparent 40%);
+            animation: spiderAurora 24s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Subtle Geometric Spider-Web Grid Background */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(230, 36, 41, 0.05) 0%, transparent 70%),
+                linear-gradient(to right, rgba(230, 36, 41, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(2, 132, 199, 0.035) 1px, transparent 1px);
+            background-size: 100% 100%, 36px 36px, 36px 36px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes spiderAurora {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.06) rotate(2deg); }
+            100% { transform: scale(1.02) rotate(-2deg); }
+        }
+
+        .hidden { display: none !important; }
+
+        /* Fullscreen Game Iframe Container */
+        #frame-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: #020306;
+        }
+
+        #game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #020306;
+        }
+
+        /* Top Heroic Web-Bar (Dynamic Island) */
+        #top-web-bar {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            right: 16px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .spider-brand-pill {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 18px 8px 10px;
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-spidey);
+            border-radius: var(--radius-pill);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(230, 36, 41, 0.25);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .spider-brand-pill:hover {
+            border-color: var(--spidey-red-glow);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.9), 0 0 30px rgba(230, 36, 41, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .spider-emblem-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e62429 0%, #991b1b 100%);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.15rem;
+            box-shadow: 0 0 16px rgba(230, 36, 41, 0.7);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spider-brand-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 0.92rem;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .spider-brand-title span.blue-highlight {
+            color: var(--spidey-electric);
+            text-shadow: 0 0 10px rgba(0, 180, 216, 0.6);
+        }
+
+        .spider-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.66rem;
+            color: var(--spidey-electric);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .spider-pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--spidey-red-glow);
+            box-shadow: 0 0 10px var(--spidey-red-glow);
+            animation: spiderPulse 1.6s infinite;
+        }
+
+        @keyframes spiderPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.55; }
+        }
+
+        .web-bar-actions {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spider-hud-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1.5px solid var(--border-electric);
+            color: var(--spidey-electric);
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(2, 132, 199, 0.35);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+        }
+
+        .spider-hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--spidey-crimson);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 25px rgba(230, 36, 41, 0.6);
+            transform: scale(1.08) translateY(-2px);
+        }
+
+        .spider-hud-btn:active {
+            transform: scale(0.92);
+        }
+
+        .spider-hud-btn.active-glow {
+            background: linear-gradient(135deg, rgba(230, 36, 41, 0.3), rgba(2, 132, 199, 0.3));
+            border-color: var(--spidey-crimson);
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(230, 36, 41, 0.6), inset 0 0 15px rgba(2, 132, 199, 0.4);
+        }
+
+        /* ==========================================================
+           CINEMATIC SPIDER-MAN QUANTUM SIGNAL HUD (FLOATING)
+           ========================================================== */
+        #spider-hud {
+            position: absolute;
+            z-index: 110;
+            top: 76px;
+            left: 16px;
+            width: 326px;
+            max-width: calc(100vw - 32px);
+            background: var(--bg-card);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1.5px solid var(--border-spidey);
+            border-radius: var(--radius-hud);
+            box-shadow: var(--shadow-cinematic);
+            overflow: hidden;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            transform-origin: top left;
+        }
+
+        #spider-hud.minimized {
+            transform: scale(0.8) translateY(-25px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Web Gripper Header */
+        .hud-web-header {
+            padding: 12px 16px;
+            background: linear-gradient(90deg, rgba(230, 36, 41, 0.15) 0%, rgba(2, 132, 199, 0.12) 100%);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: grab;
+        }
+
+        .hud-web-header:active {
+            cursor: grabbing;
+        }
+
+        .web-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .web-header-left i {
+            color: var(--spidey-crimson);
+            filter: drop-shadow(0 0 6px var(--spidey-crimson));
+        }
+
+        .web-drag-pill {
+            width: 32px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--spidey-crimson), var(--spidey-electric));
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(230, 36, 41, 0.6);
+        }
+
+        /* 3D SIGNAL CORE CENTERPIECE */
+        .spider-signal-stage,
+        #spider-signal-stage {
+            position: relative;
+            margin: 14px 14px 12px;
+            padding: 24px 14px;
+            border-radius: 18px;
+            background: #030509;
+            border: 1.5px solid rgba(230, 36, 41, 0.35);
+            box-shadow: 
+                inset 0 0 40px rgba(0, 0, 0, 0.95),
+                0 0 25px rgba(230, 36, 41, 0.2),
+                inset 0 0 25px rgba(2, 132, 199, 0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 215px;
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.4s ease;
+            will-change: transform;
+        }
+
+        .spider-signal-stage:hover,
+        #spider-signal-stage:hover {
+            transform: perspective(1000px) rotateX(4deg) rotateY(-3deg) translateY(-2px) translateZ(10px);
+            border-color: rgba(230, 36, 41, 0.65);
+            box-shadow: 
+                inset 0 0 45px rgba(0, 0, 0, 0.95),
+                0 16px 36px rgba(0, 0, 0, 0.8),
+                0 0 35px rgba(230, 36, 41, 0.38),
+                inset 0 0 30px rgba(2, 132, 199, 0.22);
+        }
+
+        /* Animated Rotating Radar Scanning Beam Overlay - Translucent Light Beam */
+        .spider-signal-stage::before,
+        #spider-signal-stage::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 340px;
+            height: 340px;
+            margin-top: -170px;
+            margin-left: -170px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                rgba(230, 36, 41, 0) 0deg,
+                rgba(230, 36, 41, 0) 280deg,
+                rgba(2, 132, 199, 0.04) 310deg,
+                rgba(0, 180, 216, 0.12) 345deg,
+                rgba(255, 42, 59, 0.28) 360deg
+            );
+            pointer-events: none;
+            z-index: 10;
+            animation: radarScanningBeam 3.6s linear infinite;
+            mix-blend-mode: screen;
+            opacity: 0.75;
+            will-change: transform;
+        }
+
+        /* Subtle Radar Core Pulse */
+        .spider-signal-stage::after,
+        #spider-signal-stage::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at 50% 50%, rgba(230, 36, 41, 0.12) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 4;
+            animation: radarHeartbeat 3.6s ease-in-out infinite;
+        }
+
+        @keyframes radarScanningBeam {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes radarHeartbeat {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.85;
+            }
+        }
+
+        /* Spider-Web Geometric Polygon in Centerpiece */
+        .spider-web-lattice {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: 
+                radial-gradient(circle at 50% 50%, transparent 20%, rgba(230, 36, 41, 0.12) 21%, transparent 22%),
+                radial-gradient(circle at 50% 50%, transparent 40%, rgba(2, 132, 199, 0.12) 41%, transparent 42%),
+                radial-gradient(circle at 50% 50%, transparent 60%, rgba(230, 36, 41, 0.1) 61%, transparent 62%),
+                radial-gradient(circle at 50% 50%, transparent 80%, rgba(2, 132, 199, 0.08) 81%, transparent 82%);
+            z-index: 1;
+        }
+
+        /* Subtle Web-Patterned Pulse Overlay Synchronized with Multiplier Changes */
+        .spider-web-pulse-overlay {
+            position: absolute;
+            inset: -20%;
+            width: 140%;
+            height: 140%;
+            pointer-events: none;
+            z-index: 2;
+            transform-origin: center center;
+            opacity: var(--web-pulse-opacity, 0.35);
+            transform: scale(var(--web-pulse-scale, 1));
+            transition: transform 0.08s ease-out, opacity 0.08s ease-out;
+            will-change: transform, opacity;
+            mix-blend-mode: screen;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(230, 36, 41, 0.22) 0%, transparent 60%),
+                repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 15px, rgba(0, 180, 216, 0.2) 16px, transparent 17px),
+                conic-gradient(from 0deg at 50% 50%, 
+                    transparent 0deg, rgba(255, 42, 59, 0.25) 0.8deg, transparent 1.6deg,
+                    transparent 44.2deg, rgba(0, 180, 216, 0.25) 45deg, transparent 45.8deg,
+                    transparent 89.2deg, rgba(255, 42, 59, 0.25) 90deg, transparent 90.8deg,
+                    transparent 134.2deg, rgba(0, 180, 216, 0.25) 135deg, transparent 135.8deg,
+                    transparent 179.2deg, rgba(255, 42, 59, 0.25) 180deg, transparent 180.8deg,
+                    transparent 224.2deg, rgba(0, 180, 216, 0.25) 225deg, transparent 225.8deg,
+                    transparent 269.2deg, rgba(255, 42, 59, 0.25) 270deg, transparent 270.8deg,
+                    transparent 314.2deg, rgba(0, 180, 216, 0.25) 315deg, transparent 315.8deg
+                );
+        }
+
+        .spider-web-pulse-overlay.surge {
+            animation: webPatternSurge 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes webPatternSurge {
+            0% {
+                transform: scale(var(--web-pulse-scale, 1));
+                opacity: var(--web-pulse-opacity, 0.35);
+                filter: brightness(1);
+            }
+            35% {
+                transform: scale(calc(var(--web-pulse-scale, 1) * 1.18));
+                opacity: 0.92;
+                filter: brightness(1.5) drop-shadow(0 0 16px rgba(0, 180, 216, 0.8));
+            }
+            70% {
+                transform: scale(calc(var(--web-pulse-scale, 1) * 1.05));
+                opacity: 0.65;
+            }
+            100% {
+                transform: scale(var(--web-pulse-scale, 1));
+                opacity: var(--web-pulse-opacity, 0.35);
+                filter: brightness(1);
+            }
+        }
+
+        /* Background Custom Image Layers with Crossfade */
+        .spider-bg-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .spider-bg-default {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(230, 36, 41, 0.15) 0%, rgba(3, 5, 9, 0.95) 75%);
+            z-index: 1;
+        }
+
+        .spider-bg-img {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s ease;
+            transform: scale(1.04);
+            z-index: 2;
+        }
+
+        .spider-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(3, 5, 9, 0.5) 0%, rgba(3, 5, 9, 0.94) 82%);
+            backdrop-filter: blur(1.5px);
+            -webkit-backdrop-filter: blur(1.5px);
+            z-index: 3;
+        }
+
+        /* Signal Core Display Element */
+        .spider-core-content {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .spidey-pill-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            background: rgba(230, 36, 41, 0.15);
+            border: 1px solid rgba(230, 36, 41, 0.4);
+            border-radius: var(--radius-pill);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            box-shadow: 0 0 15px rgba(230, 36, 41, 0.3);
+        }
+
+        .spidey-pill-tag i {
+            color: var(--spidey-red-glow);
+        }
+
+        /* Bold High-Impact Superhero Multiplier */
+        #signal-val {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -1.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #ffffff 25%, #ff4d5a 75%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 25px rgba(230, 36, 41, 0.7)) drop-shadow(0 0 45px rgba(2, 132, 199, 0.45));
+            transition: transform 0.3s ease;
+        }
+
+        #signal-val.text-mode {
+            font-size: 1.05rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0;
+            line-height: 1.4;
+            color: #fbbf24;
+            -webkit-text-fill-color: #fbbf24;
+            background: none;
+            filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.6));
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1.5px solid rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        #signal-val.signal-bump {
+            animation: spiderBump 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes spiderBump {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.22); filter: drop-shadow(0 0 40px rgba(255, 42, 59, 1)) drop-shadow(0 0 60px rgba(0, 180, 216, 0.8)); }
+            100% { transform: scale(1); }
+        }
+
+        .spider-engine-status {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        .spider-engine-status span.web-live {
+            color: var(--spidey-electric);
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(0, 180, 216, 0.6);
+        }
+
+        /* ==========================================================
+           SPIDER-MAN HEROIC ACTION BUTTONS
+           ========================================================== */
+        .spider-actions-group {
+            padding: 0 14px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .spider-tool-btn {
+            width: 100%;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1.5px solid var(--border-glass);
+            border-radius: var(--radius-btn);
+            color: var(--text-heading);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.88rem;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spider-tool-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(230, 36, 41, 0.25), rgba(2, 132, 199, 0.25), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .tool-content-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tool-hero-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(230, 36, 41, 0.12);
+            border: 1px solid rgba(230, 36, 41, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--spidey-red-glow);
+            font-size: 1rem;
+            transition: all 0.25s ease;
+        }
+
+        .tool-hero-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 0.86rem;
+            letter-spacing: 0.8px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .tool-hero-badge {
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.65rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            letter-spacing: 0.8px;
+            transition: all 0.25s ease;
+        }
+
+        .spider-tool-btn:hover {
+            border-color: var(--spidey-crimson);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(230, 36, 41, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .spider-tool-btn:hover .tool-hero-icon {
+            background: var(--spidey-crimson);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(230, 36, 41, 0.8);
+        }
+
+        .spider-tool-btn:hover::before {
+            left: 100%;
+        }
+
+        .spider-tool-btn.active {
+            background: linear-gradient(135deg, rgba(230, 36, 41, 0.25) 0%, rgba(2, 132, 199, 0.22) 100%);
+            border-color: var(--spidey-red-glow);
+            box-shadow: 0 0 30px rgba(230, 36, 41, 0.4), inset 0 0 15px rgba(2, 132, 199, 0.25);
+        }
+
+        .spider-tool-btn.active .tool-hero-icon {
+            background: linear-gradient(135deg, #e62429 0%, #0284c7 100%);
+            border-color: #ffffff;
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(230, 36, 41, 0.9);
+        }
+
+        .spider-tool-btn.active .tool-hero-badge {
+            background: rgba(0, 180, 216, 0.2);
+            border-color: var(--spidey-electric);
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(0, 180, 216, 0.45);
+        }
+
+        .spider-tool-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ==========================================================
+           CINEMATIC SPIDER AUTHENTICATION OVERLAY
+           ========================================================== */
+        .overlay-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 5, 10, 0.96);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        /* Canvas for 3D Full-Body Animated Spider-Man */
+        #spidey-character-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .spider-auth-card {
+            width: 100%;
+            max-width: 410px;
+            background: rgba(12, 17, 30, 0.9);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 2px solid var(--border-spidey);
+            border-radius: 26px;
+            padding: 32px 26px 28px;
+            text-align: center;
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.95),
+                0 0 50px rgba(230, 36, 41, 0.35),
+                inset 0 0 30px rgba(2, 132, 199, 0.15);
+            position: relative;
+            z-index: 10;
+            overflow: visible;
+            animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-style: preserve-3d;
+        }
+
+        /* 3D Interactive Spider-Man Face Mask with Emotion Engine */
+        .spidey-mask-container {
+            width: 90px;
+            height: 105px;
+            margin: -10px auto 14px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .spidey-mask-container:hover {
+            transform: scale(1.08) translateY(-4px);
+        }
+
+        .spidey-mask-container:active {
+            transform: scale(0.95);
+        }
+
+        .spidey-mask-surface {
+            width: 82px;
+            height: 94px;
+            border-radius: 41px 41px 36px 36px / 48px 48px 46px 46px;
+            background: radial-gradient(circle at 50% 38%, #ff2a3b 0%, #d91c24 55%, #880e14 100%);
+            border: 2px solid #ff4d5a;
+            position: relative;
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.8),
+                0 0 25px rgba(230, 36, 41, 0.7),
+                inset 0 2px 4px rgba(255, 255, 255, 0.4),
+                inset 0 -6px 12px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spidey-mask-surface::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(circle at 50% 50%, transparent 18%, rgba(0, 0, 0, 0.35) 19%, transparent 20%),
+                radial-gradient(circle at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.35) 41%, transparent 42%),
+                radial-gradient(circle at 50% 50%, transparent 68%, rgba(0, 0, 0, 0.35) 69%, transparent 70%),
+                linear-gradient(to bottom, transparent 49%, rgba(0, 0, 0, 0.4) 50%, transparent 51%),
+                linear-gradient(to right, transparent 49%, rgba(0, 0, 0, 0.4) 50%, transparent 51%);
+            pointer-events: none;
+        }
+
+        /* Eye Lenses */
+        .spidey-lens {
+            position: absolute;
+            top: 36px;
+            width: 28px;
+            height: 34px;
+            background: #ffffff;
+            border: 3.5px solid #000000;
+            box-shadow: 
+                0 0 14px rgba(255, 255, 255, 0.9),
+                0 0 20px rgba(0, 180, 216, 0.8),
+                inset 0 -4px 8px rgba(0, 180, 216, 0.3);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2;
+        }
+
+        .spidey-lens-left {
+            left: 11px;
+            border-radius: 20px 6px 20px 4px;
+            transform: rotate(18deg);
+        }
+
+        .spidey-lens-right {
+            right: 11px;
+            border-radius: 6px 20px 4px 20px;
+            transform: rotate(-18deg);
+        }
+
+        /* EMOTION STATES */
+        .emotion-blink .spidey-lens {
+            transform: scaleY(0.08) !important;
+            transition: transform 0.08s ease;
+        }
+
+        .emotion-smile .spidey-lens-left {
+            border-radius: 24px 6px 22px 20px;
+            transform: rotate(12deg) scaleY(0.68) translateY(4px);
+            background: #f0fdf4;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.9);
+        }
+        .emotion-smile .spidey-lens-right {
+            border-radius: 6px 24px 20px 22px;
+            transform: rotate(-12deg) scaleY(0.68) translateY(4px);
+            background: #f0fdf4;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.9);
+        }
+
+        .emotion-angry .spidey-lens-left {
+            border-radius: 4px 18px 22px 4px;
+            transform: rotate(32deg) scale(0.92) translateY(-2px);
+            background: #fee2e2;
+            border-color: #7f1d1d;
+            box-shadow: 0 0 20px rgba(255, 42, 59, 1);
+        }
+        .emotion-angry .spidey-lens-right {
+            border-radius: 18px 4px 4px 22px;
+            transform: rotate(-32deg) scale(0.92) translateY(-2px);
+            background: #fee2e2;
+            border-color: #7f1d1d;
+            box-shadow: 0 0 20px rgba(255, 42, 59, 1);
+        }
+        .emotion-angry .spidey-mask-surface {
+            box-shadow: 0 0 35px rgba(255, 42, 59, 0.9), inset 0 0 20px rgba(255, 0, 0, 0.6);
+        }
+
+        .emotion-cry .spidey-lens-left {
+            border-radius: 20px 6px 6px 20px;
+            transform: rotate(2deg) translateY(5px);
+            background: #e0f2fe;
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.8);
+        }
+        .emotion-cry .spidey-lens-right {
+            border-radius: 6px 20px 20px 6px;
+            transform: rotate(-2deg) translateY(5px);
+            background: #e0f2fe;
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.8);
+        }
+
+        .spidey-tear {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 16px;
+            border-radius: 2px;
+            background: #38bdf8;
+            box-shadow: 0 0 10px #00b4d8;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .emotion-cry .spidey-tear {
+            opacity: 1;
+            animation: tearFall 1.2s infinite ease-in;
+        }
+
+        @keyframes tearFall {
+            0% { transform: translateX(-50%) translateY(0); opacity: 0; height: 4px; }
+            40% { opacity: 1; height: 16px; }
+            100% { transform: translateX(-50%) translateY(22px); opacity: 0; }
+        }
+
+        .spidey-emotion-chip {
+            margin-top: 6px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--spidey-electric);
+            text-transform: uppercase;
+        }
+
+        .spider-auth-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            text-shadow: 
+                0 1px 0 #b91c1c,
+                0 2px 0 #991b1b,
+                0 3px 0 #7f1d1d,
+                0 4px 0 #450a0a,
+                0 8px 25px rgba(230, 36, 41, 0.8),
+                0 0 35px rgba(2, 132, 199, 0.6);
+            filter: drop-shadow(0 0 20px rgba(230, 36, 41, 0.5));
+        }
+
+        .spider-auth-subtitle {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--spidey-electric);
+            margin-bottom: 16px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 180, 216, 0.6);
+        }
+
+        .spidey-action-triggers {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .spidey-trigger-btn {
+            padding: 5px 11px;
+            border-radius: var(--radius-pill);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .spidey-trigger-btn:hover {
+            background: rgba(230, 36, 41, 0.25);
+            border-color: var(--spidey-crimson);
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(230, 36, 41, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .spidey-trigger-btn:active {
+            transform: scale(0.95);
+        }
+
+        .spider-input-wrapper {
+            position: relative;
+            margin-bottom: 18px;
+        }
+
+        .spider-input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .spider-auth-input {
+            width: 100%;
+            padding: 14px 14px 14px 44px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-glass);
+            border-radius: var(--radius-btn);
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .spider-auth-input:focus {
+            border-color: var(--spidey-crimson);
+            box-shadow: 0 0 0 3px rgba(230, 36, 41, 0.2), 0 0 25px rgba(230, 36, 41, 0.35);
+        }
+
+        .spider-input-wrapper:focus-within i {
+            color: var(--spidey-red-glow);
+        }
+
+        .btn-spider-engage {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #e62429 0%, #0284c7 100%);
+            border: none;
+            border-radius: var(--radius-btn);
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(230, 36, 41, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+        }
+
+        .btn-spider-engage:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(230, 36, 41, 0.65), 0 0 25px rgba(2, 132, 199, 0.5);
+        }
+
+        .btn-spider-engage:active {
+            transform: scale(0.98);
+        }
+
+        #login-error {
+            color: var(--spidey-red-glow);
+            font-size: 0.84rem;
+            margin-top: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* Status Toast Notification */
+        #status-msg {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 120;
+            background: rgba(10, 14, 24, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #ffffff;
+            padding: 10px 24px;
+            border: 1.5px solid var(--spidey-electric);
+            border-radius: var(--radius-pill);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 180, 216, 0.5);
+            white-space: nowrap;
+        }
+
+        /* Spider-Sense Crosshair Reticle (Vadifay) */
+        #cursor-icon {
+            position: fixed;
+            z-index: 99999;
+            pointer-events: none;
+            width: 46px;
+            height: 46px;
+            border: 2px solid var(--spidey-red-glow);
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+            transform: translate3d(calc(var(--cx, -100px) - 50%), calc(var(--cy, -100px) - 50%), 0);
+            will-change: transform;
+            transition: opacity 0.2s ease;
+            box-shadow: 0 0 25px var(--spidey-red-glow), inset 0 0 15px rgba(2, 132, 199, 0.5);
+            background: radial-gradient(circle at 50% 50%, rgba(230, 36, 41, 0.25) 0%, transparent 70%);
+        }
+
+        #cursor-icon::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 9px;
+            background: var(--spidey-electric);
+            box-shadow: 0 0 6px var(--spidey-electric);
+        }
+
+        #cursor-icon::after {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 9px;
+            background: var(--spidey-electric);
+            box-shadow: 0 0 6px var(--spidey-electric);
+        }
+
+        #cursor-msg {
+            position: absolute;
+            top: 54px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 14, 24, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: #ffffff;
+            padding: 8px 18px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            border: 1.5px solid var(--spidey-crimson);
+            border-radius: var(--radius-pill);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(230, 36, 41, 0.5);
+        }
+
+        .pulse { animation: spiderSensePulse 0.7s infinite; }
+
+        @keyframes spiderSensePulse {
+            0% { transform: translate3d(calc(var(--cx) - 50%), calc(var(--cy) - 50%), 0) scale(1); }
+            50% { transform: translate3d(calc(var(--cx) - 50%), calc(var(--cy) - 50%), 0) scale(1.38); box-shadow: 0 0 45px rgba(255, 42, 59, 1), 0 0 60px rgba(0, 180, 216, 0.7); }
+            100% { transform: translate3d(calc(var(--cx) - 50%), calc(var(--cy) - 50%), 0) scale(1); }
+        }
+
+        /* Iframe Loading & Error Screens */
+        #loading-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: rgba(3, 5, 10, 0.96);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.4s ease;
+        }
+
+        #loading-overlay.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spider-loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 3.5px solid rgba(255, 255, 255, 0.08);
+            border-top: 3.5px solid var(--spidey-crimson);
+            border-right: 3.5px solid var(--spidey-electric);
+            border-radius: 50%;
+            animation: spiderSpin 0.85s linear infinite;
+            box-shadow: 0 0 25px rgba(230, 36, 41, 0.5);
+        }
+
+        @keyframes spiderSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-title {
+            margin-top: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .loader-subtext {
+            margin-top: 6px;
+            font-size: 0.82rem;
+            color: var(--spidey-electric);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #error-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 6;
+            background: rgba(3, 5, 10, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .spider-error-card {
+            max-width: 390px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 1.5px solid var(--spidey-crimson);
+            border-radius: var(--radius-hud);
+            padding: 30px 24px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(230, 36, 41, 0.35);
+        }
+
+        .spider-error-icon {
+            font-size: 2.6rem;
+            color: var(--spidey-crimson);
+            margin-bottom: 14px;
+            filter: drop-shadow(0 0 15px var(--spidey-crimson));
+        }
+
+        .spider-error-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .spider-error-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .error-action-primary {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #e62429 0%, #0284c7 100%);
+            border: none;
+            border-radius: var(--radius-btn);
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 0.88rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(230, 36, 41, 0.4);
+        }
+
+        .error-action-secondary {
+            width: 100%;
+            padding: 13px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-btn);
+            color: var(--text-heading);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 0.88rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        /* Auto-Reload Progress Bar */
+        #reload-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--spidey-crimson), var(--spidey-electric));
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(230, 36, 41, 0.8);
+            transition: width 1s linear;
+        }
+
+        /* ==========================================================
+           CINEMATIC NIGHTTIME CITY SKYLINE & SEARCHLIGHTS
+           ========================================================== */
+        #city-night-backdrop {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .city-sky-clouds {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 25% 15%, rgba(230, 36, 41, 0.18) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 25%, rgba(2, 132, 199, 0.2) 0%, transparent 60%),
+                linear-gradient(to bottom, rgba(4, 6, 11, 0.4) 0%, rgba(4, 6, 11, 0.95) 90%);
+        }
+
+        .city-searchlight {
+            position: absolute;
+            bottom: -50px;
+            width: 90px;
+            height: 120vh;
+            background: linear-gradient(to top, rgba(0, 180, 216, 0.16) 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+            transform-origin: bottom center;
+            filter: blur(14px);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .searchlight-1 {
+            left: 18%;
+            animation: sweepSearchlight1 16s ease-in-out infinite alternate;
+        }
+
+        .searchlight-2 {
+            right: 22%;
+            animation: sweepSearchlight2 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes sweepSearchlight1 {
+            0% { transform: rotate(-32deg); opacity: 0.35; }
+            50% { opacity: 0.8; }
+            100% { transform: rotate(18deg); opacity: 0.35; }
+        }
+
+        @keyframes sweepSearchlight2 {
+            0% { transform: rotate(26deg); opacity: 0.35; }
+            50% { opacity: 0.75; }
+            100% { transform: rotate(-22deg); opacity: 0.35; }
+        }
+
+        .skyline-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .skyline-far {
+            height: 38vh;
+            opacity: 0.35;
+            background-repeat: repeat-x;
+            background-position: bottom center;
+            background-size: 520px 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 200' fill='%23080c16'%3E%3Crect x='10' y='60' width='45' height='140'/%3E%3Crect x='65' y='30' width='55' height='170'/%3E%3Cpolygon points='92,10 90,30 95,30' fill='%2300b4d8'/%3E%3Crect x='130' y='80' width='40' height='120'/%3E%3Crect x='180' y='45' width='65' height='155'/%3E%3Cpolygon points='212,18 210,45 215,45' fill='%23e62429'/%3E%3Crect x='255' y='70' width='50' height='130'/%3E%3Crect x='315' y='25' width='60' height='175'/%3E%3Cpolygon points='345,5 343,25 347,25' fill='%2300b4d8'/%3E%3Crect x='385' y='65' width='45' height='135'/%3E%3Crect x='440' y='40' width='70' height='160'/%3E%3C/svg%3E");
+        }
+
+        .skyline-mid {
+            height: 26vh;
+            opacity: 0.65;
+            background-repeat: repeat-x;
+            background-position: bottom center;
+            background-size: 640px 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 180' fill='%23040710'%3E%3Crect x='15' y='40' width='60' height='140'/%3E%3Ccircle cx='30' cy='60' r='2' fill='%23ffd166' opacity='0.7'/%3E%3Ccircle cx='50' cy='60' r='2' fill='%2300b4d8' opacity='0.6'/%3E%3Ccircle cx='30' cy='85' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='50' cy='85' r='2' fill='%23ffd166' opacity='0.7'/%3E%3Crect x='90' y='20' width='75' height='160'/%3E%3Cline x1='127' y1='0' x2='127' y2='20' stroke='%23ff2a3b' stroke-width='2'/%3E%3Ccircle cx='127' cy='2' r='2.5' fill='%23ff2a3b'/%3E%3Ccircle cx='110' cy='45' r='2' fill='%2300b4d8' opacity='0.8'/%3E%3Ccircle cx='140' cy='45' r='2' fill='%23ffd166' opacity='0.7'/%3E%3Ccircle cx='110' cy='75' r='2' fill='%23ffd166' opacity='0.6'/%3E%3Crect x='180' y='65' width='55' height='115'/%3E%3Crect x='250' y='35' width='80' height='145'/%3E%3Cline x1='290' y1='10' x2='290' y2='35' stroke='%2300b4d8' stroke-width='2'/%3E%3Ccircle cx='290' cy='12' r='2.5' fill='%2300b4d8'/%3E%3Ccircle cx='275' cy='60' r='2' fill='%23ffd166' opacity='0.8'/%3E%3Ccircle cx='305' cy='60' r='2' fill='%23ffffff' opacity='0.7'/%3E%3Crect x='345' y='50' width='60' height='130'/%3E%3Crect x='420' y='15' width='85' height='165'/%3E%3Cline x1='462' y1='0' x2='462' y2='15' stroke='%23ff2a3b' stroke-width='2'/%3E%3Ccircle cx='462' cy='2' r='2.5' fill='%23ff2a3b'/%3E%3Ccircle cx='445' cy='40' r='2' fill='%23ffd166' opacity='0.8'/%3E%3Ccircle cx='480' cy='40' r='2' fill='%2300b4d8' opacity='0.7'/%3E%3Crect x='520' y='45' width='65' height='135'/%3E%3Crect x='600' y='60' width='40' height='120'/%3E%3C/svg%3E");
+        }
+
+        .city-fog-layer {
+            position: absolute;
+            bottom: 0;
+            left: -50%;
+            width: 200%;
+            height: 22vh;
+            background: linear-gradient(to top, rgba(4, 6, 11, 0.95) 0%, rgba(2, 132, 199, 0.08) 50%, transparent 100%);
+            filter: blur(20px);
+            animation: fogDrift 30s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes fogDrift {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(15%); }
+        }
+
+        /* Fixed Global Character Canvas */
+        #spidey-character-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 102;
+            pointer-events: none;
+        }
+
+        /* ==========================================================
+           CINEMATIC SPIDER-MAN SPEECH BUBBLE & DIALOGUE ENGINE
+           ========================================================== */
+        #spidey-speech-bubble {
+            position: fixed;
+            z-index: 125;
+            max-width: 290px;
+            min-width: 180px;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1.5px solid var(--spidey-crimson);
+            border-radius: 18px;
+            padding: 10px 14px 12px;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.9),
+                0 0 25px rgba(230, 36, 41, 0.45),
+                inset 0 0 15px rgba(0, 180, 216, 0.15);
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif;
+            pointer-events: auto;
+            transform-origin: bottom center;
+            transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+
+        #spidey-speech-bubble.hidden {
+            opacity: 0;
+            transform: scale(0.7) translateY(12px) !important;
+            pointer-events: none;
+        }
+
+        .bubble-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .bubble-author-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--spidey-red-glow);
+            text-transform: uppercase;
+        }
+
+        .bubble-author-left i {
+            font-size: 0.8rem;
+            color: var(--spidey-crimson);
+        }
+
+        .bubble-mood-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: rgba(0, 180, 216, 0.18);
+            border: 1px solid var(--border-electric);
+            color: var(--spidey-electric);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .bubble-body {
+            font-size: 0.82rem;
+            line-height: 1.35;
+            color: #f1f5f9;
+            font-weight: 600;
+            word-wrap: break-word;
+        }
+
+        .bubble-tail {
+            position: absolute;
+            bottom: -9px;
+            left: 24px;
+            width: 0;
+            height: 0;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-top: 10px solid var(--spidey-crimson);
+        }
+
+        .bubble-tail.tail-top {
+            bottom: auto;
+            top: -9px;
+            border-top: none;
+            border-bottom: 10px solid var(--spidey-crimson);
+        }
+
+        /* Floating Heroic Quick-Command Dock */
+        #spider-quick-dock {
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            z-index: 110;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: rgba(10, 14, 26, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid var(--border-spidey);
+            border-radius: var(--radius-pill);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 25px rgba(230, 36, 41, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .dock-btn {
+            padding: 7px 11px;
+            border-radius: var(--radius-pill);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            outline: none;
+        }
+
+        .dock-btn:hover {
+            background: rgba(230, 36, 41, 0.3);
+            border-color: var(--spidey-crimson);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(230, 36, 41, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .dock-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 480px) {
+            #spider-quick-dock {
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+                justify-content: center;
+                overflow-x: auto;
+                padding: 5px 8px;
+            }
+            .dock-btn {
+                padding: 6px 9px;
+                font-size: 0.62rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body::before,
+            .spider-signal-stage::before,
+            #spider-signal-stage::before,
+            .spider-signal-stage::after,
+            #spider-signal-stage::after,
+            .spider-web-pulse-overlay,
+            .spider-web-pulse-overlay.surge,
+            .city-searchlight,
+            .city-fog-layer {
+                animation: none !important;
+            }
+            .spider-signal-stage,
+            #spider-signal-stage,
+            .spider-signal-stage:hover,
+            #spider-signal-stage:hover,
+            .spider-web-pulse-overlay {
+                transform: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- CINEMATIC NIGHTTIME CITY SKYLINE BACKDROP -->
+    <div id="city-night-backdrop">
+        <div class="city-sky-clouds"></div>
+        <div class="city-searchlight searchlight-1"></div>
+        <div class="city-searchlight searchlight-2"></div>
+        <div class="skyline-layer skyline-far"></div>
+        <div class="skyline-layer skyline-mid"></div>
+        <div class="city-fog-layer"></div>
+    </div>
+
+    <!-- GLOBAL HIGH-PERFORMANCE SPIDER-MAN KINEMATIC CANVAS -->
+    <canvas id="spidey-character-canvas"></canvas>
+
+    <!-- CINEMATIC SPIDER-MAN SPEECH BUBBLE (DYNAMICALLY TRACKS SPIDEY) -->
+    <div id="spidey-speech-bubble" class="hidden">
+        <div class="bubble-header">
+            <span class="bubble-author-left">
+                <i class="fa-solid fa-spider"></i> SPIDER-MAN
+            </span>
+            <span class="bubble-mood-badge" id="bubble-mood-tag">HEROIC</span>
+        </div>
+        <div class="bubble-body" id="bubble-text">Spider-Sense is active! Scanning network telemetry.</div>
+        <div class="bubble-tail" id="bubble-tail"></div>
+    </div>
+
+    <!-- CONNECTION LOST OVERLAY -->
+    <div id="reconnect-screen" class="overlay-screen">
+        <div class="spider-auth-card" style="border-color: var(--spidey-crimson);">
+            <div class="spider-auth-badge" style="color: var(--spidey-crimson);">
+                <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+            <h2 class="spider-auth-title">SIGNAL LOST</h2>
+            <p class="spider-auth-subtitle">Re-weaving secure quantum telemetry thread...</p>
+        </div>
+    </div>
+
+    <!-- USER AUTHENTICATION OVERLAY -->
+    <div id="login-overlay" class="overlay-screen hidden">
+        <div class="spider-auth-card">
+            <!-- 3D Spider-Man Face Mask with Emotion Engine -->
+            <div class="spidey-mask-container" id="spidey-mask" title="Spider-Man Autonomous AI Mask">
+                <div class="spidey-mask-surface">
+                    <div class="spidey-lens spidey-lens-left">
+                        <div class="spidey-tear"></div>
+                    </div>
+                    <div class="spidey-lens spidey-lens-right">
+                        <div class="spidey-tear"></div>
+                    </div>
+                </div>
+                <div class="spidey-emotion-chip" id="spidey-emotion-label">HEROIC SENSE</div>
+            </div>
+
+            <h3 class="spider-auth-title">SPIDER-CORE</h3>
+            <p class="spider-auth-subtitle">Neural Access Protocol</p>
+
+            <div class="spider-input-wrapper">
+                <i class="fa-solid fa-key"></i>
+                <input type="password" id="sys-pass" class="spider-auth-input" placeholder="Enter Access Password" autocomplete="current-password">
+            </div>
+            <button id="sys-login-btn" class="btn-spider-engage">
+                <i class="fa-solid fa-bolt-lightning"></i> ENGAGE SUIT
+            </button>
+            <div id="login-error"></div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WORKSPACE -->
+    <div id="app" class="hidden">
+        <!-- FRAME & GAME LAYER -->
+        <div id="frame-container">
+            <iframe id="game-frame" src="about:blank"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-modals allow-downloads allow-presentation"
+                referrerpolicy="no-referrer"
+                allow="autoplay; fullscreen; encrypted-media"
+            ></iframe>
+
+            <!-- LOADING OVERLAY -->
+            <div id="loading-overlay" class="hidden">
+                <div class="spider-loader-ring"></div>
+                <div class="loader-title">CALIBRATING WEB HUD</div>
+                <div class="loader-subtext" id="load-method-text">Weaving secure portal...</div>
+            </div>
+
+            <!-- ERROR OVERLAY -->
+            <div id="error-overlay" class="hidden">
+                <div class="spider-error-card">
+                    <div class="spider-error-icon"><i class="fa-solid fa-shield-virus"></i></div>
+                    <div class="spider-error-title">PORTAL BLOCKED</div>
+                    <div class="spider-error-desc">Target site is preventing frame integration. Open in a dedicated browser tab to launch.</div>
+                    <button id="open-new-tab-btn" class="error-action-primary">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
+                    </button>
+                    <button id="retry-load-btn" class="error-action-secondary">
+                        <i class="fa-solid fa-rotate-right"></i> Retry Connection
+                    </button>
+                </div>
+            </div>
+
+            <div id="reload-bar"></div>
+        </div>
+
+        <!-- TOP HEROIC WEB-BAR -->
+        <div id="top-web-bar">
+            <div class="spider-brand-pill">
+                <div class="spider-emblem-badge"><i class="fa-solid fa-spider"></i></div>
+                <div>
+                    <div class="spider-brand-title">SPIDER<span class="blue-highlight">CORE</span></div>
+                    <div class="spider-status-pill"><span class="spider-pulse-dot"></span> Web Radar Active</div>
+                </div>
+            </div>
+            <div class="web-bar-actions">
+                <button class="spider-hud-btn active-glow" id="hud-toggle-btn" title="Toggle Radar HUD">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </button>
+                <button class="spider-hud-btn" id="newtab-float-btn" title="Launch Game Tab">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- CINEMATIC SPIDER-MAN HUD CARD -->
+        <div id="spider-hud">
+            <div class="hud-web-header" id="drag-handle">
+                <div class="web-header-left">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>SPIDER-RADAR HUD</span>
+                </div>
+                <div class="web-drag-pill"></div>
+            </div>
+
+            <!-- SIGNAL CENTERPIECE -->
+            <div class="spider-signal-stage" id="spider-signal-stage">
+                <div class="spider-web-lattice"></div>
+                <div class="spider-web-pulse-overlay" id="spider-web-pulse-overlay"></div>
+                <div class="spider-bg-layer" id="signal-bg-layer">
+                    <div class="spider-bg-default"></div>
+                    <div class="spider-bg-img" id="signal-bg-img-active"></div>
+                    <div class="spider-bg-img" id="signal-bg-img-next"></div>
+                    <div class="spider-bg-overlay"></div>
+                </div>
+
+                <div class="spider-core-content">
+                    <div class="spidey-pill-tag">
+                        <i class="fa-solid fa-bolt"></i> Live Multiplier
+                    </div>
+                    <div id="signal-val">--</div>
+                    <div class="spider-engine-status">
+                        <span>RADAR:</span> <span class="web-live">SYNCHRONIZED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HEROIC ACTION DOCK (3 TOOLS) -->
+            <div class="spider-actions-group">
+                <button class="spider-tool-btn" id="tool-aviator">
+                    <span class="tool-content-left">
+                        <span class="tool-hero-icon"><i class="fa-solid fa-plane-up"></i></span>
+                        <span class="tool-hero-title">Aviator V1</span>
+                    </span>
+                    <span class="tool-hero-badge">RADAR</span>
+                </button>
+                <button class="spider-tool-btn" id="tool-wingo">
+                    <span class="tool-content-left">
+                        <span class="tool-hero-icon"><i class="fa-solid fa-dice-d20"></i></span>
+                        <span class="tool-hero-title">Wingo V1</span>
+                    </span>
+                    <span class="tool-hero-badge">ALGO</span>
+                </button>
+                <button class="spider-tool-btn" id="tool-vadifay">
+                    <span class="tool-content-left">
+                        <span class="tool-hero-icon"><i class="fa-solid fa-fingerprint"></i></span>
+                        <span class="tool-hero-title">Vadifay (Core)</span>
+                    </span>
+                    <span class="tool-hero-badge">SENSE</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- STATUS NOTIFICATION CAPSULE -->
+        <div id="status-msg"></div>
+    </div>
+
+    <!-- SPIDER-SENSE TARGETING RETICLE -->
+    <div id="cursor-icon" class="hidden">
+        <div id="cursor-msg"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // Exact Firebase Configuration (Preserved)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqXcG5lO_6TKr9hogvRRJnhJst65LlmJw",
+            authDomain: "bikash-95009.firebaseapp.com",
+            databaseURL: "https://bikash-95009-default-rtdb.firebaseio.com",
+            projectId: "bikash-95009",
+            storageBucket: "bikash-95009.firebasestorage.app",
+            messagingSenderId: "1051764382628",
+            appId: "1:1051764382628:web:9642a2b06c07f49c007f31",
+            measurementId: "G-Q3K44HW2C0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Audio System
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if(!audioCtx) audioCtx = new AudioContext();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                const t = audioCtx.currentTime;
+                if(type === 'on') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(450, t);
+                    osc.frequency.exponentialRampToValueAtTime(900, t + 0.1);
+                    gain.gain.setValueAtTime(0.09, t);
+                    gain.gain.exponentialRampToValueAtTime(0.005, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                } else if (type === 'off') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(400, t);
+                    osc.frequency.exponentialRampToValueAtTime(220, t + 0.1);
+                    gain.gain.setValueAtTime(0.09, t);
+                    gain.gain.exponentialRampToValueAtTime(0.005, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                } else if (type === 'verify') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(700, t);
+                    gain.gain.setValueAtTime(0.07, t);
+                    gain.gain.linearRampToValueAtTime(0.07, t + 0.4);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.5);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                }
+            } catch(e) {
+                console.warn('Audio not initialized:', e);
+            }
+        }
+
+        // State variables
+        let systemData = {};
+        let isAuthenticated = false;
+        let activeTools = new Set();
+        let vadifayMsgIndex = 0;
+        let vadifayInterval = null;
+        let isVerifying = false;
+        let hasLinkLoaded = false;
+        let loadTimer = null;
+        let autoReloadTimer = null;
+        let autoReloadCountdown = null;
+        let currentSiteUrl = '';
+        let isFrameLoading = false;
+
+        // UI elements
+        const elApp = document.getElementById('app');
+        const elLogin = document.getElementById('login-overlay');
+        const elReconnect = document.getElementById('reconnect-screen');
+        const elGameFrame = document.getElementById('game-frame');
+        const elSignal = document.getElementById('signal-val');
+        const elStatus = document.getElementById('status-msg');
+        const elCursor = document.getElementById('cursor-icon');
+        const elCursorMsg = document.getElementById('cursor-msg');
+        const elLoadingOverlay = document.getElementById('loading-overlay');
+        const elErrorOverlay = document.getElementById('error-overlay');
+        const elLoadMethodText = document.getElementById('load-method-text');
+        const elNewTabFloatBtn = document.getElementById('newtab-float-btn');
+        const elReloadBar = document.getElementById('reload-bar');
+        const hudToggleBtn = document.getElementById('hud-toggle-btn');
+        const spiderHud = document.getElementById('spider-hud');
+        const elWebPulseOverlay = document.getElementById('spider-web-pulse-overlay');
+
+        const btnAviator = document.getElementById('tool-aviator');
+        const btnWingo = document.getElementById('tool-wingo');
+        const btnVadifay = document.getElementById('tool-vadifay');
+        const buttons = [btnAviator, btnWingo, btnVadifay];
+
+        function showStatus(msg) {
+            elStatus.innerText = msg;
+            elStatus.style.opacity = '1';
+            setTimeout(() => { elStatus.style.opacity = '0'; }, 2200);
+        }
+
+        function setToolActive(toolId, btn) {
+            initAudio();
+            if(activeTools.has(toolId)) {
+                activeTools.delete(toolId);
+                btn.classList.remove('active');
+                playSound('off');
+                disableToolLogic(toolId);
+                return;
+            }
+            activeTools.add(toolId);
+            btn.classList.add('active');
+            playSound('on');
+            enableToolLogic(toolId);
+        }
+
+        btnAviator.addEventListener('click', () => setToolActive('aviator', btnAviator));
+        btnWingo.addEventListener('click', () => setToolActive('wingo', btnWingo));
+        btnVadifay.addEventListener('click', () => setToolActive('vadifay', btnVadifay));
+
+        function disableToolLogic(toolId) {
+            if(toolId === 'vadifay') {
+                elCursor.classList.add('hidden');
+                clearInterval(vadifayInterval);
+            }
+        }
+
+        function enableToolLogic(toolId) {
+            if(toolId === 'aviator') {
+                showStatus('Aviator Web Radar Calibrated');
+                if (window.spideyCharacter) {
+                    window.spideyCharacter.trigger('jump');
+                    window.spideyCharacter.speak("Aviator V1 radar locked onto live stream!", "heroic", 3500);
+                }
+            } else if (toolId === 'wingo') {
+                showStatus('Wingo Neural Thread Online');
+                if (window.spideyCharacter) {
+                    window.spideyCharacter.trigger('crawl');
+                    window.spideyCharacter.speak("Wingo V1 algorithms calculating probabilities!", "thinking", 3500);
+                }
+            } else if (toolId === 'vadifay') {
+                showStatus('Spider-Sense Scanner Engaged');
+                if (window.spideyCharacter) {
+                    window.spideyCharacter.trigger('hang');
+                    window.spideyCharacter.speak("Spider-Sense active! Tap screen to verify!", "alert", 4000);
+                }
+                elCursor.classList.remove('hidden', 'pulse');
+                isVerifying = false;
+                vadifayMsgIndex = 0;
+                updateVadifayMsg();
+                vadifayInterval = setInterval(() => {
+                    if(!isVerifying) {
+                        vadifayMsgIndex = (vadifayMsgIndex + 1) % (systemData.verifyMessages || ["Waiting..."]).length;
+                        updateVadifayMsg();
+                    }
+                }, 2000);
+            }
+        }
+
+        function updateVadifayMsg() {
+            const msgs = systemData.verifyMessages || ["Tap screen to verify"];
+            elCursorMsg.innerText = msgs[vadifayMsgIndex] || "";
+        }
+
+        function updateCursor(clientX, clientY) {
+            elCursor.style.setProperty('--cx', clientX + 'px');
+            elCursor.style.setProperty('--cy', clientY + 'px');
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying) updateCursor(e.clientX, e.clientY);
+        });
+        document.addEventListener('touchstart', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying && e.touches.length > 0) {
+                updateCursor(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, {passive: true});
+        document.addEventListener('touchmove', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying && e.touches.length > 0) {
+                updateCursor(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, {passive: true});
+        document.addEventListener('touchend', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying) {
+                initAudio();
+                if(e.target.closest('#spider-hud') || e.target.closest('#top-web-bar') || e.target.closest('#error-overlay') || e.target.closest('#loading-overlay')) return;
+                handleVadifayClick();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            initAudio();
+            if(e.target.closest('#spider-hud') || e.target.closest('#top-web-bar') || e.target.closest('#error-overlay') || e.target.closest('#loading-overlay')) return;
+            handleVadifayClick();
+        });
+
+        window.addEventListener('blur', () => {
+            if(document.activeElement === elGameFrame) {
+                initAudio();
+                handleVadifayClick();
+                window.focus();
+            }
+        });
+
+        function handleVadifayClick() {
+            if(activeTools.has('vadifay') && !isVerifying) {
+                isVerifying = true;
+                playSound('verify');
+                elCursor.classList.add('pulse');
+                elCursorMsg.innerText = "Redirecting Protocol...";
+                showStatus("Launching Target Portal...");
+
+                const loader = document.getElementById('loading-overlay');
+                const loaderText = document.getElementById('load-method-text');
+                if (loader) {
+                    loader.classList.remove('hidden', 'fade-out');
+                    loaderText.innerText = "Establishing quantum redirect tunnel...";
+                }
+
+                setTimeout(() => {
+                    if(systemData.redirectLink) {
+                        window.location.href = systemData.redirectLink;
+                    } else {
+                        if (loader) loader.classList.add('fade-out');
+                        showStatus('Error: No Redirect Target Configured');
+                        isVerifying = false;
+                        elCursor.classList.remove('pulse');
+                        updateVadifayMsg();
+                    }
+                }, 800);
+            }
+        }
+
+        // Background Image Crossfade System
+        let currentSignalImageUrl = "";
+        let isUsingImgActive = true;
+
+        function handleSignalImageUpdate(newUrl) {
+            newUrl = (newUrl || "").trim();
+            if(newUrl === currentSignalImageUrl) return;
+
+            const imgActive = document.getElementById('signal-bg-img-active');
+            const imgNext = document.getElementById('signal-bg-img-next');
+            if(!imgActive || !imgNext) return;
+
+            if(!newUrl) {
+                currentSignalImageUrl = "";
+                imgActive.style.opacity = '0';
+                imgNext.style.opacity = '0';
+                return;
+            }
+
+            const testImg = new Image();
+            testImg.onload = function() {
+                currentSignalImageUrl = newUrl;
+                if(isUsingImgActive) {
+                    imgNext.style.backgroundImage = `url("${newUrl}")`;
+                    imgNext.style.opacity = '1';
+                    imgActive.style.opacity = '0';
+                    isUsingImgActive = false;
+                } else {
+                    imgActive.style.backgroundImage = `url("${newUrl}")`;
+                    imgActive.style.opacity = '1';
+                    imgNext.style.opacity = '0';
+                    isUsingImgActive = true;
+                }
+            };
+            testImg.onerror = function() {
+                currentSignalImageUrl = "";
+                imgActive.style.opacity = '0';
+                imgNext.style.opacity = '0';
+            };
+            testImg.src = newUrl;
+        }
+
+        // Firebase Connection Handlers
+        db.ref('.info/connected').on('value', (snap) => {
+            if(snap.val() === true) {
+                if(isAuthenticated) {
+                    elReconnect.classList.add('hidden');
+                } else {
+                    elReconnect.classList.add('hidden');
+                    elLogin.classList.remove('hidden');
+                }
+            } else {
+                elReconnect.classList.remove('hidden');
+                elLogin.classList.add('hidden');
+                elApp.classList.add('hidden');
+            }
+        });
+
+        db.ref('system').on('value', (snap) => {
+            systemData = snap.val() || {};
+
+            if(systemData.toolState === false) {
+                buttons.forEach(b => { b.disabled = true; b.classList.remove('active'); });
+                if(activeTools.has('vadifay')) disableToolLogic('vadifay');
+                activeTools.clear();
+            } else {
+                buttons.forEach(b => b.disabled = false);
+            }
+
+            handleSignalImageUpdate(systemData.signalImage);
+
+            const isDepositModeOff = systemData.depositMode === false;
+            if(isDepositModeOff) {
+                elSignal.classList.add('text-mode');
+                elSignal.classList.remove('signal-bump');
+                elSignal.innerText = systemData.depositMessage || "ডিপোজিট করুন সিগন্যাল পেতে";
+                updateWebPulse(null);
+            } else {
+                elSignal.classList.remove('text-mode');
+                const newSignal = systemData.signal !== undefined ? systemData.signal : "--";
+                if(newSignal !== "--") {
+                    const oldValueStr = elSignal.innerText.replace('x', '');
+                    const oldValue = parseFloat(oldValueStr);
+                    const newValue = parseFloat(newSignal);
+
+                    if(!isNaN(oldValue) && !isNaN(newValue) && oldValue !== newValue) {
+                        animateSignal(oldValue, newValue);
+                    } else if(isNaN(oldValue) || oldValueStr === "--" || oldValueStr === systemData.depositMessage) {
+                        elSignal.innerText = parseFloat(newSignal).toFixed(2) + "x";
+                        updateWebPulse(newValue);
+                    }
+                } else {
+                    elSignal.innerText = "--";
+                    updateWebPulse(null);
+                }
+            }
+
+            if(!hasLinkLoaded && systemData.gameLink) {
+                loadSiteInFrame(systemData.gameLink);
+                hasLinkLoaded = true;
+            }
+        });
+
+        // Web Pulse Scale & Opacity Synchronizer
+        function updateWebPulse(multiplierVal, surgeFactor = 0) {
+            if (!elWebPulseOverlay) return;
+            const num = parseFloat(multiplierVal);
+            if (isNaN(num) || num <= 0) {
+                elWebPulseOverlay.style.setProperty('--web-pulse-scale', '0.96');
+                elWebPulseOverlay.style.setProperty('--web-pulse-opacity', '0.22');
+                return;
+            }
+
+            // Real-time synchronization: scale and opacity map dynamically to multiplier magnitude & surge
+            // Higher multiplier = wider web resonance and brighter pulse
+            const baseScale = Math.min(1.24, 0.98 + (num / 32));
+            const baseOpacity = Math.min(0.85, 0.32 + (num / 24));
+
+            const dynamicScale = baseScale + (surgeFactor * 0.14);
+            const dynamicOpacity = Math.min(0.96, baseOpacity + (surgeFactor * 0.42));
+
+            elWebPulseOverlay.style.setProperty('--web-pulse-scale', dynamicScale.toFixed(3));
+            elWebPulseOverlay.style.setProperty('--web-pulse-opacity', dynamicOpacity.toFixed(3));
+        }
+
+        function animateSignal(start, end) {
+            const duration = 500;
+            const startTime = Date.now();
+
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            function animate() {
+                const now = Date.now();
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = start + (end - start) * easeOutCubic(progress);
+
+                elSignal.innerText = current.toFixed(2) + "x";
+
+                // Synchronize web pulse scale and opacity with current animated multiplier value
+                const pulseSine = Math.sin(progress * Math.PI);
+                updateWebPulse(current, pulseSine);
+
+                if(progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    elSignal.innerText = end.toFixed(2) + "x";
+                    elSignal.classList.remove('signal-bump');
+                    void elSignal.offsetWidth;
+                    elSignal.classList.add('signal-bump');
+                    setTimeout(() => elSignal.classList.remove('signal-bump'), 600);
+
+                    // Final multiplier surge animation on the web pulse overlay
+                    updateWebPulse(end, 0);
+                    if (elWebPulseOverlay) {
+                        elWebPulseOverlay.classList.remove('surge');
+                        void elWebPulseOverlay.offsetWidth;
+                        elWebPulseOverlay.classList.add('surge');
+                        setTimeout(() => {
+                            if (elWebPulseOverlay) elWebPulseOverlay.classList.remove('surge');
+                        }, 750);
+                    }
+
+                    // Multiplier reaction
+                    if (end >= 2.0 && window.spideyCharacter) {
+                        window.spideyCharacter.speak("High multiplier spike: " + end.toFixed(2) + "x!", "surprised", 3500);
+                        window.spideyCharacter.trigger('web');
+                    }
+                }
+            }
+            animate();
+        }
+
+        // ==========================================================
+        // SPIDER-MAN 3D FACE EMOTION CONTROLLER & CHARACTER ENGINE
+        // ==========================================================
+        const spideyMask = document.getElementById('spidey-mask');
+        const spideyEmotionLabel = document.getElementById('spidey-emotion-label');
+        const emotions = ['neutral', 'smile', 'angry', 'cry', 'thinking', 'surprised', 'alert'];
+        let currentEmotionIndex = 0;
+        let currentEmotion = 'neutral';
+        let blinkTimer = null;
+        let adminSpeechCycleTimer = null;
+        let adminSpeechIndex = 0;
+
+        function setSpideyEmotion(emotion) {
+            currentEmotion = emotion;
+            if (window.spideyCharacter) {
+                window.spideyCharacter.eyeState = emotion;
+            }
+            if (!spideyMask) return;
+            spideyMask.classList.remove('emotion-smile', 'emotion-angry', 'emotion-cry', 'emotion-blink');
+            
+            const labels = {
+                'neutral': 'HEROIC SENSE',
+                'smile': 'TRIUMPH',
+                'happy': 'TRIUMPH',
+                'angry': 'THREAT DETECTED',
+                'cry': 'NETWORK TEARS',
+                'concerned': 'ALERT SENSE',
+                'blink': 'SCANNING KEY',
+                'thinking': 'CALCULATING',
+                'surprised': 'HIGH SURGE',
+                'alert': 'WEB DEFENSE'
+            };
+
+            if (emotion === 'smile' || emotion === 'happy') spideyMask.classList.add('emotion-smile');
+            else if (emotion === 'angry') spideyMask.classList.add('emotion-angry');
+            else if (emotion === 'cry' || emotion === 'concerned') spideyMask.classList.add('emotion-cry');
+            else if (emotion === 'blink') spideyMask.classList.add('emotion-blink');
+
+            if (spideyEmotionLabel) {
+                spideyEmotionLabel.innerText = labels[emotion] || 'HEROIC SENSE';
+            }
+        }
+
+        function cycleEmotion() {
+            initAudio();
+            currentEmotionIndex = (currentEmotionIndex + 1) % emotions.length;
+            const chosen = emotions[currentEmotionIndex];
+            setSpideyEmotion(chosen);
+            if (window.spideyCharacter) {
+                if (chosen === 'angry') window.spideyCharacter.trigger('error');
+                else if (chosen === 'smile') window.spideyCharacter.trigger('jump');
+                else if (chosen === 'thinking') window.spideyCharacter.speak("Analyzing quantum web trajectories...", "thinking");
+                else if (chosen === 'alert') window.spideyCharacter.trigger('web');
+            }
+        }
+
+        if (spideyMask) {
+            spideyMask.addEventListener('click', cycleEmotion);
+        }
+
+        function startAutoBlink() {
+            if (blinkTimer) clearInterval(blinkTimer);
+            blinkTimer = setInterval(() => {
+                if (currentEmotion === 'neutral' && spideyMask) {
+                    spideyMask.classList.add('emotion-blink');
+                    setTimeout(() => {
+                        if (currentEmotion === 'neutral' && spideyMask) {
+                            spideyMask.classList.remove('emotion-blink');
+                        }
+                    }, 160);
+                }
+            }, 3800);
+        }
+        startAutoBlink();
+
+        // Responsive Input Emotion Feedback
+        const sysPassInput = document.getElementById('sys-pass');
+        if (sysPassInput) {
+            sysPassInput.addEventListener('focus', () => {
+                setSpideyEmotion('thinking');
+                if (window.spideyCharacter) {
+                    window.spideyCharacter.trigger('peek');
+                    window.spideyCharacter.speak("Analyzing access passkey...", "thinking", 3000);
+                }
+            });
+            sysPassInput.addEventListener('input', () => {
+                if (sysPassInput.value.length > 0) {
+                    setSpideyEmotion('smile');
+                } else {
+                    setSpideyEmotion('neutral');
+                }
+            });
+            sysPassInput.addEventListener('blur', () => {
+                if (currentEmotion !== 'cry' && currentEmotion !== 'angry') {
+                    setSpideyEmotion('neutral');
+                }
+            });
+        }
+
+        // Action Trigger Buttons helper
+        window.triggerSpideyAction = function(action) {
+            initAudio();
+            if (window.spideyCharacter) {
+                window.spideyCharacter.trigger(action);
+            }
+            if (action === 'swing') {
+                setSpideyEmotion('smile');
+                playSound('on');
+            } else if (action === 'web') {
+                setSpideyEmotion('alert');
+                playSound('verify');
+            } else if (action === 'jump') {
+                setSpideyEmotion('smile');
+                playSound('complete');
+            } else if (action === 'crawl') {
+                setSpideyEmotion('thinking');
+                playSound('on');
+            } else if (action === 'hang') {
+                setSpideyEmotion('happy');
+                playSound('verify');
+            }
+        };
+
+        window.triggerSpideySpeech = function() {
+            initAudio();
+            if (window.spideyCharacter) {
+                const messages = systemData.verifyMessages && systemData.verifyMessages.length > 0
+                    ? systemData.verifyMessages
+                    : ["Spider-Sense is active!", "All systems operational.", "Quantum radar telemetry locked."];
+                const msg = messages[Math.floor(Math.random() * messages.length)];
+                window.spideyCharacter.speak(msg, "heroic", 4500);
+            }
+        };
+
+        window.cycleEmotion = cycleEmotion;
+
+        // ==========================================================
+        // CINEMATIC FULL-BODY SPIDER-MAN KINEMATIC ACTOR & SPEECH ENGINE
+        // ==========================================================
+        function initSpideyCharacterCanvas() {
+            const canvas = document.getElementById('spidey-character-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let w, h;
+            let animId = null;
+
+            function resize() {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Web Strands, Particles, and Shockwaves
+            const particles = [];
+            const webStrands = [];
+            const shockwaves = [];
+
+            function spawnParticles(x, y, count, color) {
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5.5 + 1.5;
+                    particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        decay: Math.random() * 0.03 + 0.015,
+                        color: color || (Math.random() > 0.5 ? '#e62429' : '#00b4d8'),
+                        size: Math.random() * 3.5 + 1.5
+                    });
+                }
+            }
+
+            function addWebStrand(x1, y1, x2, y2, duration = 140) {
+                webStrands.push({
+                    x1, y1, x2, y2,
+                    curX: x1, curY: y1,
+                    progress: 0,
+                    life: duration,
+                    maxLife: duration,
+                    sag: (Math.random() - 0.5) * 22
+                });
+            }
+
+            function addShockwave(x, y, color = '#00b4d8') {
+                shockwaves.push({
+                    x, y,
+                    radius: 6,
+                    maxRadius: 42,
+                    life: 1,
+                    decay: 0.04,
+                    color
+                });
+            }
+
+            // Speech Bubble System
+            const bubbleEl = document.getElementById('spidey-speech-bubble');
+            const bubbleTextEl = document.getElementById('bubble-text');
+            const bubbleMoodTagEl = document.getElementById('bubble-mood-tag');
+            const bubbleTailEl = document.getElementById('bubble-tail');
+            let bubbleTimeout = null;
+            let typewriterInterval = null;
+
+            // Complete Spider-Man Kinematic Actor
+            const spidey = {
+                x: w * 0.5,
+                y: h * 0.28,
+                targetX: w * 0.5,
+                targetY: h * 0.28,
+                vx: 0,
+                vy: 0,
+                scale: 0.88,
+                facing: 1, // 1 for right, -1 for left
+                orientation: 0, // 0: upright on horizontal surface, Math.PI: upside-down
+                state: 'perch', // 'perch', 'walk', 'run', 'jump', 'swing', 'crawl', 'hang', 'peek', 'web', 'stumble', 'slingshot'
+                timer: 0,
+                walkCycle: 0,
+                crawlCycle: 0,
+                flipAngle: 0,
+                swingAnchor: { x: w * 0.3, y: 0 },
+                swingAngle: 0,
+                swingSpeed: 0,
+                swingRadius: 260,
+                crouch: 0,
+                breathe: 0,
+                isHangingUpsideDown: false,
+                eyeState: 'neutral',
+                currentPlatform: 'card',
+
+                speak(text, mood = 'heroic', duration = 4500) {
+                    if (!bubbleEl || !bubbleTextEl) return;
+                    if (bubbleTimeout) clearTimeout(bubbleTimeout);
+                    if (typewriterInterval) clearInterval(typewriterInterval);
+
+                    const moodColors = {
+                        'heroic': '#00b4d8',
+                        'triumph': '#10b981',
+                        'warning': '#f59e0b',
+                        'alert': '#ef4444',
+                        'thinking': '#a855f7'
+                    };
+                    if (bubbleMoodTagEl) {
+                        bubbleMoodTagEl.innerText = mood.toUpperCase();
+                        bubbleMoodTagEl.style.color = moodColors[mood] || '#00b4d8';
+                        bubbleMoodTagEl.style.borderColor = moodColors[mood] || '#00b4d8';
+                    }
+
+                    setSpideyEmotion(mood === 'triumph' ? 'smile' : (mood === 'warning' ? 'concerned' : (mood === 'alert' ? 'alert' : (mood === 'thinking' ? 'thinking' : 'neutral'))));
+
+                    // Typewriter Effect
+                    bubbleTextEl.innerText = "";
+                    bubbleEl.classList.remove('hidden');
+                    let idx = 0;
+                    typewriterInterval = setInterval(() => {
+                        if (idx < text.length) {
+                            bubbleTextEl.innerText += text[idx];
+                            idx++;
+                        } else {
+                            clearInterval(typewriterInterval);
+                        }
+                    }, 24);
+
+                    bubbleTimeout = setTimeout(() => {
+                        bubbleEl.classList.add('hidden');
+                    }, duration);
+                },
+
+                trigger(action, targetPos) {
+                    this.timer = 0;
+                    this.isHangingUpsideDown = false;
+                    this.orientation = 0;
+
+                    if (action === 'walk') {
+                        this.state = 'walk';
+                        this.facing = Math.random() > 0.5 ? 1 : -1;
+                        setSpideyEmotion('neutral');
+                    } else if (action === 'run') {
+                        this.state = 'run';
+                        this.facing = Math.random() > 0.5 ? 1 : -1;
+                        setSpideyEmotion('smile');
+                    } else if (action === 'jump') {
+                        this.state = 'jump';
+                        this.vy = -17;
+                        this.vx = (Math.random() > 0.5 ? 1 : -1) * (4.5 + Math.random() * 3);
+                        this.facing = this.vx > 0 ? 1 : -1;
+                        this.flipAngle = 0;
+                        setSpideyEmotion('smile');
+                        spawnParticles(this.x, this.y + 35, 18, '#e62429');
+                        addShockwave(this.x, this.y + 40, '#ff2a3b');
+                    } else if (action === 'swing') {
+                        this.state = 'swing';
+                        const anchorX = Math.random() > 0.5 ? w * 0.15 + Math.random() * (w * 0.2) : w * 0.65 + Math.random() * (w * 0.2);
+                        this.swingAnchor = { x: anchorX, y: 10 };
+                        this.swingRadius = Math.min(w, h) * (0.35 + Math.random() * 0.2);
+                        this.swingAngle = anchorX < w * 0.5 ? -Math.PI * (0.35 + Math.random() * 0.15) : Math.PI * (0.35 + Math.random() * 0.15);
+                        this.swingSpeed = (anchorX < w * 0.5 ? 1 : -1) * (0.04 + Math.random() * 0.02);
+                        this.facing = this.swingSpeed > 0 ? 1 : -1;
+                        setSpideyEmotion('smile');
+                        spawnParticles(this.x, this.y, 20, '#00b4d8');
+                    } else if (action === 'crawl') {
+                        this.state = 'crawl';
+                        this.x = Math.random() > 0.5 ? 35 : w - 35;
+                        this.y = h * (0.2 + Math.random() * 0.5);
+                        this.orientation = this.x < w * 0.5 ? -Math.PI * 0.5 : Math.PI * 0.5;
+                        this.facing = 1;
+                        setSpideyEmotion('thinking');
+                        spawnParticles(this.x, this.y, 14, '#00b4d8');
+                    } else if (action === 'hang') {
+                        this.state = 'hang';
+                        this.x = w * (0.25 + Math.random() * 0.5);
+                        this.y = Math.min(220, h * (0.2 + Math.random() * 0.12));
+                        this.isHangingUpsideDown = true;
+                        this.orientation = Math.PI;
+                        this.flipAngle = 0;
+                        setSpideyEmotion('happy');
+                        addWebStrand(this.x, 0, this.x, this.y - 30, 9999);
+                        spawnParticles(this.x, this.y, 16, '#ffffff');
+                        if (Math.random() > 0.6) {
+                            this.speak("Just hanging out across the network!", "heroic", 3800);
+                        }
+                    } else if (action === 'peek') {
+                        this.state = 'peek';
+                        const safeCard = this.getSafeTargetAnchor();
+                        this.x = safeCard.x - (Math.random() > 0.5 ? 40 : -40);
+                        this.y = safeCard.y;
+                        this.facing = this.x < safeCard.x ? 1 : -1;
+                        setSpideyEmotion('thinking');
+                    } else if (action === 'web') {
+                        this.state = 'web';
+                        const safeCard = this.getSafeTargetAnchor();
+                        addWebStrand(this.x - 20, this.y, safeCard.x - 50, safeCard.y + 30, 140);
+                        addWebStrand(this.x + 20, this.y, safeCard.x + 50, safeCard.y + 30, 140);
+                        setSpideyEmotion('alert');
+                        spawnParticles(this.x, this.y, 25, '#ffffff');
+                        addShockwave(safeCard.x, safeCard.y + 30, '#00b4d8');
+                    } else if (action === 'error') {
+                        this.state = 'stumble';
+                        this.vx = (Math.random() - 0.5) * 8;
+                        this.vy = -7;
+                        setSpideyEmotion('angry');
+                        spawnParticles(this.x, this.y, 25, '#ff2a3b');
+                    } else if (action === 'success') {
+                        this.state = 'slingshot';
+                        this.vy = -26;
+                        setSpideyEmotion('smile');
+                        addWebStrand(this.x, this.y, w * 0.2, 0, 90);
+                        addWebStrand(this.x, this.y, w * 0.8, 0, 90);
+                        spawnParticles(this.x, this.y, 45, '#00ffcc');
+                        addShockwave(this.x, this.y, '#10b981');
+                    }
+                },
+
+                pickNextAction() {
+                    const actions = ['walk', 'run', 'jump', 'swing', 'crawl', 'hang', 'peek', 'web'];
+                    const chosen = actions[Math.floor(Math.random() * actions.length)];
+                    this.trigger(chosen);
+                },
+
+                getSafeTargetAnchor() {
+                    const isAppActive = elLogin && elLogin.classList.contains('hidden');
+                    if (!isAppActive) {
+                        const card = document.querySelector('.spider-auth-card');
+                        if (card) {
+                            const rect = card.getBoundingClientRect();
+                            return { x: rect.left + rect.width * 0.5, y: Math.max(70, rect.top - 60) };
+                        }
+                    } else {
+                        const hud = document.getElementById('spider-hud');
+                        if (hud && !hud.classList.contains('minimized')) {
+                            const rect = hud.getBoundingClientRect();
+                            return { x: Math.min(w - 60, rect.left + rect.width * 0.5), y: Math.max(75, rect.top - 58) };
+                        }
+                    }
+                    return { x: w * 0.5, y: h * 0.25 };
+                },
+
+                update() {
+                    this.breathe += 0.04;
+                    this.timer++;
+
+                    const anchor = this.getSafeTargetAnchor();
+
+                    // State machine execution
+                    if (this.state === 'perch') {
+                        this.targetX = anchor.x;
+                        this.targetY = anchor.y;
+                        this.x += (this.targetX - this.x) * 0.08;
+                        this.y += (this.targetY - this.y) * 0.08;
+                        this.flipAngle = 0;
+                        this.orientation = 0;
+
+                        // Autonomous continuous action chaining with natural short breaks (0.5s to 1.5s)
+                        if (this.timer > 35 + Math.random() * 45) {
+                            this.pickNextAction();
+                        }
+                    } else if (this.state === 'walk') {
+                        this.walkCycle += 0.16;
+                        this.x += this.facing * 1.8;
+                        this.y = anchor.y + Math.abs(Math.sin(this.walkCycle * 2)) * -3;
+
+                        // Turn around when hitting screen or platform limits
+                        if (this.x < 50) {
+                            this.facing = 1;
+                        } else if (this.x > w - 50) {
+                            this.facing = -1;
+                        }
+
+                        if (this.timer > 140) {
+                            this.pickNextAction();
+                        }
+                    } else if (this.state === 'run') {
+                        this.walkCycle += 0.28;
+                        this.x += this.facing * 4.2;
+                        this.y = anchor.y + Math.abs(Math.sin(this.walkCycle * 2)) * -4;
+
+                        if (this.timer > 50) {
+                            this.trigger('jump');
+                        }
+                    } else if (this.state === 'jump') {
+                        this.vy += 0.72; // gravity
+                        this.y += this.vy;
+                        this.x += this.vx;
+                        this.flipAngle += this.facing * 0.24;
+
+                        if (this.y >= anchor.y && this.vy > 0) {
+                            this.y = anchor.y;
+                            this.vy = 0;
+                            this.vx = 0;
+                            this.flipAngle = 0;
+                            this.crouch = 1;
+                            this.state = 'perch';
+                            this.timer = 0;
+                            spawnParticles(this.x, this.y + 40, 22, '#00b4d8');
+                            addShockwave(this.x, this.y + 40, '#00b4d8');
+                            setTimeout(() => { this.crouch = 0; }, 500);
+                        }
+                    } else if (this.state === 'swing') {
+                        this.swingAngle += this.swingSpeed;
+                        this.swingSpeed += -0.0016 * Math.sin(this.swingAngle);
+                        this.swingSpeed *= 0.993; // air friction
+
+                        this.x = this.swingAnchor.x + Math.sin(this.swingAngle) * this.swingRadius;
+                        this.y = this.swingAnchor.y + Math.cos(this.swingAngle) * this.swingRadius;
+                        this.flipAngle = this.swingAngle * 0.85;
+                        this.facing = this.swingSpeed > 0 ? 1 : -1;
+
+                        if (Math.abs(this.swingSpeed) < 0.006 && this.timer > 120) {
+                            this.trigger('jump');
+                        }
+                    } else if (this.state === 'crawl') {
+                        this.crawlCycle += 0.18;
+                        this.y += Math.sin(this.crawlCycle) * 2;
+                        this.x += Math.cos(this.crawlCycle * 0.5) * 0.8;
+
+                        if (this.timer > 160) {
+                            this.trigger('swing');
+                        }
+                    } else if (this.state === 'hang') {
+                        this.y = Math.min(220, h * 0.28) + Math.sin(this.timer * 0.04) * 6;
+                        this.flipAngle = Math.sin(this.timer * 0.035) * 0.08;
+
+                        if (this.timer > 220) {
+                            this.trigger('jump');
+                        }
+                    } else if (this.state === 'peek') {
+                        this.y = anchor.y + Math.sin(this.timer * 0.08) * 3;
+                        if (this.timer > 100) {
+                            this.pickNextAction();
+                        }
+                    } else if (this.state === 'web') {
+                        this.y = anchor.y + Math.sin(this.timer * 0.2) * 3;
+                        if (this.timer > 70) {
+                            this.pickNextAction();
+                        }
+                    } else if (this.state === 'stumble') {
+                        this.vy += 0.65;
+                        this.y += this.vy;
+                        this.x += this.vx;
+                        this.flipAngle = Math.sin(this.timer * 0.3) * 0.25;
+                        if (this.y >= anchor.y && this.vy > 0) {
+                            this.y = anchor.y;
+                            this.vy = 0;
+                            this.vx = 0;
+                            this.state = 'perch';
+                            this.timer = 0;
+                        }
+                    } else if (this.state === 'slingshot') {
+                        this.y += this.vy;
+                        this.vy *= 1.05;
+                    }
+
+                    // Synchronize Speech Bubble Screen Position
+                    if (bubbleEl && !bubbleEl.classList.contains('hidden')) {
+                        const isUpsideDown = this.isHangingUpsideDown || Math.abs(this.orientation) > 2;
+                        let bubbleX = this.x - 70;
+                        let bubbleY = isUpsideDown ? this.y + 65 : this.y - 100;
+
+                        // Clamp to viewport
+                        bubbleX = Math.max(12, Math.min(bubbleX, w - 300));
+                        bubbleY = Math.max(12, Math.min(bubbleY, h - 160));
+
+                        bubbleEl.style.transform = `translate(${bubbleX}px, ${bubbleY}px)`;
+                        if (bubbleTailEl) {
+                            if (isUpsideDown) bubbleTailEl.classList.add('tail-top');
+                            else bubbleTailEl.classList.remove('tail-top');
+                        }
+                    }
+                },
+
+                draw(c) {
+                    c.save();
+                    c.translate(this.x, this.y);
+                    c.scale(this.scale * this.facing, this.scale);
+                    c.rotate(this.orientation + this.flipAngle);
+
+                    // Dynamic Web Line for Hanging or Swinging
+                    if (this.state === 'hang') {
+                        c.save();
+                        c.beginPath();
+                        c.moveTo(0, 40); // from feet/hands upside down
+                        c.lineTo(0, -this.y);
+                        c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                        c.lineWidth = 2.5;
+                        c.shadowColor = '#00b4d8';
+                        c.shadowBlur = 12;
+                        c.stroke();
+                        c.restore();
+                    } else if (this.state === 'swing') {
+                        c.save();
+                        c.rotate(-this.flipAngle);
+                        c.beginPath();
+                        c.moveTo(0, -32);
+                        c.lineTo(this.swingAnchor.x - this.x, this.swingAnchor.y - this.y);
+                        c.strokeStyle = 'rgba(255, 255, 255, 0.88)';
+                        c.lineWidth = 2.6;
+                        c.shadowColor = '#00b4d8';
+                        c.shadowBlur = 14;
+                        c.stroke();
+                        c.restore();
+                    }
+
+                    const breatheOffset = Math.sin(this.breathe) * 2;
+                    const isCrouched = (this.state === 'perch' && this.crouch > 0);
+                    const isWalking = (this.state === 'walk' || this.state === 'run');
+
+                    // Drop Shadow (when upright)
+                    if (!this.isHangingUpsideDown) {
+                        c.save();
+                        c.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        c.filter = 'blur(6px)';
+                        c.beginPath();
+                        c.ellipse(0, 60, 28, 8, 0, 0, Math.PI * 2);
+                        c.fill();
+                        c.restore();
+                    }
+
+                    // --- PROCEDURAL FULL-BODY KINEMATICS ---
+                    c.lineCap = 'round';
+                    c.lineJoin = 'round';
+
+                    // Kinematic Stride Angles
+                    let strideL = 0, strideR = 0;
+                    if (isWalking) {
+                        strideL = Math.sin(this.walkCycle) * 22;
+                        strideR = -Math.sin(this.walkCycle) * 22;
+                    }
+
+                    // Left Leg (Blue suit with red boots)
+                    c.beginPath();
+                    c.moveTo(-10, 16);
+                    if (isCrouched) {
+                        c.lineTo(-30, 36);
+                        c.lineTo(-24, 56);
+                    } else if (isWalking) {
+                        c.lineTo(-14 + strideL * 0.4, 38);
+                        c.lineTo(-16 + strideL, 62);
+                    } else {
+                        c.lineTo(-18, 40);
+                        c.lineTo(-20, 64);
+                    }
+                    c.strokeStyle = '#0284c7';
+                    c.lineWidth = 9;
+                    c.shadowColor = '#00b4d8';
+                    c.shadowBlur = 8;
+                    c.stroke();
+
+                    // Left Boot (Red)
+                    c.beginPath();
+                    if (isCrouched) {
+                        c.moveTo(-30, 46);
+                        c.lineTo(-24, 58);
+                        c.lineTo(-15, 58);
+                    } else if (isWalking) {
+                        c.moveTo(-15 + strideL * 0.6, 50);
+                        c.lineTo(-16 + strideL, 64);
+                        c.lineTo(-8 + strideL, 64);
+                    } else {
+                        c.moveTo(-19, 52);
+                        c.lineTo(-20, 65);
+                        c.lineTo(-12, 65);
+                    }
+                    c.strokeStyle = '#e62429';
+                    c.lineWidth = 9.5;
+                    c.stroke();
+
+                    // Right Leg
+                    c.beginPath();
+                    c.moveTo(10, 16);
+                    if (isCrouched) {
+                        c.lineTo(30, 36);
+                        c.lineTo(24, 56);
+                    } else if (isWalking) {
+                        c.lineTo(14 + strideR * 0.4, 38);
+                        c.lineTo(16 + strideR, 62);
+                    } else {
+                        c.lineTo(18, 40);
+                        c.lineTo(20, 64);
+                    }
+                    c.strokeStyle = '#0284c7';
+                    c.lineWidth = 9;
+                    c.stroke();
+
+                    // Right Boot
+                    c.beginPath();
+                    if (isCrouched) {
+                        c.moveTo(30, 46);
+                        c.lineTo(24, 58);
+                        c.lineTo(33, 58);
+                    } else if (isWalking) {
+                        c.moveTo(15 + strideR * 0.6, 50);
+                        c.lineTo(16 + strideR, 64);
+                        c.lineTo(24 + strideR, 64);
+                    } else {
+                        c.moveTo(19, 52);
+                        c.lineTo(20, 65);
+                        c.lineTo(28, 65);
+                    }
+                    c.strokeStyle = '#e62429';
+                    c.lineWidth = 9.5;
+                    c.stroke();
+
+                    // --- TORSO ---
+                    // Blue Flanks
+                    c.fillStyle = '#0284c7';
+                    c.beginPath();
+                    c.ellipse(0, 4 + breatheOffset, 18, 20, 0, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Red Vest Center
+                    c.fillStyle = '#e62429';
+                    c.shadowColor = '#ff2a3b';
+                    c.shadowBlur = 10;
+                    c.beginPath();
+                    c.moveTo(-12, -14 + breatheOffset);
+                    c.lineTo(12, -14 + breatheOffset);
+                    c.lineTo(14, 18 + breatheOffset);
+                    c.lineTo(-14, 18 + breatheOffset);
+                    c.closePath();
+                    c.fill();
+
+                    // Chest Spider Emblem
+                    c.save();
+                    c.fillStyle = '#000000';
+                    c.shadowColor = '#000000';
+                    c.shadowBlur = 4;
+                    c.beginPath();
+                    c.ellipse(0, 3 + breatheOffset, 3.5, 6, 0, 0, Math.PI * 2);
+                    c.fill();
+                    c.strokeStyle = '#000000';
+                    c.lineWidth = 1.4;
+                    [-1, 1].forEach(dir => {
+                        c.beginPath();
+                        c.moveTo(dir * 2, -1 + breatheOffset);
+                        c.lineTo(dir * 10, -8 + breatheOffset);
+                        c.lineTo(dir * 13, -3 + breatheOffset);
+                        c.stroke();
+                        c.beginPath();
+                        c.moveTo(dir * 2, 2 + breatheOffset);
+                        c.lineTo(dir * 11, -1 + breatheOffset);
+                        c.lineTo(dir * 12, 5 + breatheOffset);
+                        c.stroke();
+                        c.beginPath();
+                        c.moveTo(dir * 2, 5 + breatheOffset);
+                        c.lineTo(dir * 10, 11 + breatheOffset);
+                        c.lineTo(dir * 11, 17 + breatheOffset);
+                        c.stroke();
+                        c.beginPath();
+                        c.moveTo(dir * 1.5, 7 + breatheOffset);
+                        c.lineTo(dir * 8, 16 + breatheOffset);
+                        c.lineTo(dir * 7, 21 + breatheOffset);
+                        c.stroke();
+                    });
+                    c.restore();
+
+                    // --- ARMS & HANDS ---
+                    let armSwingL = isWalking ? -strideL * 0.45 : 0;
+                    let armSwingR = isWalking ? -strideR * 0.45 : 0;
+
+                    // Left Arm
+                    c.beginPath();
+                    c.moveTo(-14, -8 + breatheOffset);
+                    if (this.state === 'web') {
+                        c.lineTo(-32, -4);
+                        c.lineTo(-44, -2);
+                    } else if (this.state === 'swing' || this.state === 'hang') {
+                        c.lineTo(-24, -22);
+                        c.lineTo(0, -32);
+                    } else if (this.state === 'peek') {
+                        c.lineTo(-28, -12);
+                        c.lineTo(-38, -26); // waving gesture
+                    } else {
+                        c.lineTo(-26 + armSwingL, 10);
+                        c.lineTo(-18 + armSwingL, 26);
+                    }
+                    c.strokeStyle = '#e62429';
+                    c.lineWidth = 7.5;
+                    c.stroke();
+
+                    if (this.state === 'web') {
+                        c.fillStyle = '#ffffff';
+                        c.shadowColor = '#00ffff';
+                        c.shadowBlur = 15;
+                        c.beginPath();
+                        c.arc(-44, -2, 5, 0, Math.PI * 2);
+                        c.fill();
+                    }
+
+                    // Right Arm
+                    c.beginPath();
+                    c.moveTo(14, -8 + breatheOffset);
+                    if (this.state === 'web') {
+                        c.lineTo(32, -4);
+                        c.lineTo(44, -2);
+                    } else if (this.state === 'swing') {
+                        c.lineTo(24, 4);
+                        c.lineTo(34, 16);
+                    } else if (this.state === 'hang') {
+                        c.lineTo(26, -10);
+                        c.lineTo(36, 6); // gesturing while hanging
+                    } else {
+                        c.lineTo(26 + armSwingR, 10);
+                        c.lineTo(18 + armSwingR, 26);
+                    }
+                    c.strokeStyle = '#e62429';
+                    c.lineWidth = 7.5;
+                    c.stroke();
+
+                    if (this.state === 'web') {
+                        c.fillStyle = '#ffffff';
+                        c.shadowColor = '#00ffff';
+                        c.shadowBlur = 15;
+                        c.beginPath();
+                        c.arc(44, -2, 5, 0, Math.PI * 2);
+                        c.fill();
+                    }
+
+                    // --- HEAD & EXPRESSIVE MASK ---
+                    const headY = -26 + breatheOffset;
+                    c.save();
+                    c.fillStyle = '#e62429';
+                    c.shadowColor = '#ff2a3b';
+                    c.shadowBlur = 14;
+                    c.beginPath();
+                    c.ellipse(0, headY, 15, 18, 0, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Mask Web Pattern Lines
+                    c.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+                    c.lineWidth = 1;
+                    c.beginPath();
+                    c.arc(0, headY, 6, 0, Math.PI * 2);
+                    c.arc(0, headY, 11, 0, Math.PI * 2);
+                    c.stroke();
+
+                    // Dynamic Eye Rendering based on this.eyeState
+                    let eyeTilt = 0.18;
+                    let eyeScaleY = 1;
+                    let eyeFill = '#ffffff';
+                    let eyeGlow = '#00b4d8';
+
+                    if (this.eyeState === 'smile' || this.eyeState === 'happy') {
+                        eyeScaleY = 0.65;
+                        eyeGlow = '#10b981';
+                    } else if (this.eyeState === 'angry') {
+                        eyeTilt = 0.36;
+                        eyeFill = '#fee2e2';
+                        eyeGlow = '#ff2a3b';
+                    } else if (this.eyeState === 'concerned' || this.eyeState === 'cry') {
+                        eyeTilt = 0.05;
+                        eyeFill = '#e0f2fe';
+                        eyeGlow = '#0284c7';
+                    } else if (this.eyeState === 'surprised') {
+                        eyeScaleY = 1.35;
+                        eyeGlow = '#ffffff';
+                    } else if (this.eyeState === 'thinking') {
+                        eyeTilt = 0.28;
+                        eyeGlow = '#a855f7';
+                    }
+
+                    // Left Eye
+                    c.save();
+                    c.translate(-5.5, headY - 1);
+                    c.rotate(eyeTilt);
+                    c.scale(1, eyeScaleY);
+                    c.fillStyle = eyeFill;
+                    c.strokeStyle = '#000000';
+                    c.lineWidth = 2.2;
+                    c.shadowColor = eyeGlow;
+                    c.shadowBlur = 10;
+                    c.beginPath();
+                    c.moveTo(0, -6);
+                    c.quadraticCurveTo(-6, 0, -2, 6);
+                    c.quadraticCurveTo(4, 3, 0, -6);
+                    c.fill();
+                    c.stroke();
+                    c.restore();
+
+                    // Right Eye
+                    c.save();
+                    c.translate(5.5, headY - 1);
+                    c.rotate(-eyeTilt);
+                    c.scale(1, eyeScaleY);
+                    c.fillStyle = eyeFill;
+                    c.strokeStyle = '#000000';
+                    c.lineWidth = 2.2;
+                    c.shadowColor = eyeGlow;
+                    c.shadowBlur = 10;
+                    c.beginPath();
+                    c.moveTo(0, -6);
+                    c.quadraticCurveTo(6, 0, 2, 6);
+                    c.quadraticCurveTo(-4, 3, 0, -6);
+                    c.fill();
+                    c.stroke();
+                    c.restore();
+
+                    c.restore(); // Head restore
+                    c.restore(); // Main translate restore
+                }
+            };
+
+            window.spideyCharacter = spidey;
+
+            // Autonomous Speech Loop (Cycles through Admin-Configured Messages)
+            if (adminSpeechCycleTimer) clearInterval(adminSpeechCycleTimer);
+            adminSpeechCycleTimer = setInterval(() => {
+                if (window.spideyCharacter && bubbleEl && bubbleEl.classList.contains('hidden')) {
+                    const messages = systemData.verifyMessages && systemData.verifyMessages.length > 0
+                        ? systemData.verifyMessages
+                        : ["Quantum telemetry stream synchronized.", "Spider-Sense monitoring live signal.", "Security thread active."];
+                    const chosen = messages[adminSpeechIndex % messages.length];
+                    adminSpeechIndex++;
+                    window.spideyCharacter.speak(chosen, "heroic", 4500);
+                }
+            }, 12000);
+
+            // Master Render Loop
+            function render() {
+                ctx.clearRect(0, 0, w, h);
+
+                // Update & Render Shockwaves
+                for (let i = shockwaves.length - 1; i >= 0; i--) {
+                    const sw = shockwaves[i];
+                    sw.radius += 1.8;
+                    sw.life -= sw.decay;
+                    if (sw.life <= 0 || sw.radius >= sw.maxRadius) {
+                        shockwaves.splice(i, 1);
+                        continue;
+                    }
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = sw.color;
+                    ctx.globalAlpha = sw.life * 0.7;
+                    ctx.lineWidth = 2.5;
+                    ctx.shadowColor = sw.color;
+                    ctx.shadowBlur = 12;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Update & Render Web Strands
+                for (let i = webStrands.length - 1; i >= 0; i--) {
+                    const strand = webStrands[i];
+                    strand.progress = Math.min(1, strand.progress + 0.12);
+                    strand.life--;
+
+                    const targetX = strand.x1 + (strand.x2 - strand.x1) * strand.progress;
+                    const targetY = strand.y1 + (strand.y2 - strand.y1) * strand.progress;
+                    const midX = (strand.x1 + targetX) * 0.5;
+                    const midY = (strand.y1 + targetY) * 0.5 + strand.sag * (strand.life / strand.maxLife);
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(strand.x1, strand.y1);
+                    ctx.quadraticCurveTo(midX, midY, targetX, targetY);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(1, strand.life / 30)})`;
+                    ctx.lineWidth = 2.4;
+                    ctx.shadowColor = '#00b4d8';
+                    ctx.shadowBlur = 12;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    if (strand.life <= 0) {
+                        webStrands.splice(i, 1);
+                    }
+                }
+
+                // Update & Render Character
+                spidey.update();
+                spidey.draw(ctx);
+
+                // Update & Render Sparks / Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= p.decay;
+                    if (p.life <= 0) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.save();
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                animId = requestAnimationFrame(render);
+            }
+
+            render();
+        }
+
+        // Initialize Canvas Character on DOM Ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSpideyCharacterCanvas);
+        } else {
+            initSpideyCharacterCanvas();
+        }
+
+        function handleUserLogin() {
+            initAudio();
+            const pass = document.getElementById('sys-pass').value;
+            const card = document.querySelector('.spider-auth-card');
+
+            if(pass === systemData.userPassword && pass !== "") {
+                setSpideyEmotion('smile');
+                if (window.spideyCharacter) {
+                    window.spideyCharacter.trigger('success');
+                    window.spideyCharacter.speak("Access Granted! Quantum suit online!", "triumph", 4000);
+                }
+                playSound('complete');
+                
+                // Cinematic successful engage transition
+                if (card) {
+                    card.style.transform = 'scale(1.05) translateZ(30px)';
+                    card.style.boxShadow = '0 0 70px rgba(0, 255, 204, 0.8), 0 0 100px rgba(230, 36, 41, 0.7)';
+                }
+
+                setTimeout(() => {
+                    isAuthenticated = true;
+                    elLogin.classList.add('hidden');
+                    elApp.classList.remove('hidden');
+                    showStatus('Suit Activated // Web HUD Online');
+                }, 750);
+            } else {
+                setSpideyEmotion(Math.random() > 0.5 ? 'angry' : 'cry');
+                if (window.spideyCharacter) {
+                    window.spideyCharacter.trigger('error');
+                    window.spideyCharacter.speak("Access Passkey Mismatch! Check credentials.", "warning", 3500);
+                }
+                playSound('off');
+
+                const err = document.getElementById('login-error');
+                if (err) err.innerText = "Access Passkey Mismatch.";
+
+                // Shakes card on failed attempt
+                if (card) {
+                    card.classList.remove('pulse');
+                    card.style.animation = 'none';
+                    void card.offsetWidth;
+                    card.style.animation = 'shake 0.45s ease-in-out';
+                }
+            }
+        }
+
+        document.getElementById('sys-login-btn').addEventListener('click', handleUserLogin);
+        document.getElementById('sys-pass').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleUserLogin();
+        });
+
+        // HUD Dragging with Clamping
+        const handle = document.getElementById('drag-handle');
+        let isDragging = false, startX, startY, currentX = 16, currentY = 76;
+
+        handle.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', dragMove);
+        document.addEventListener('mouseup', dragEnd);
+        handle.addEventListener('touchstart', dragStart, {passive: false});
+        document.addEventListener('touchmove', dragMove, {passive: false});
+        document.addEventListener('touchend', dragEnd);
+
+        function dragStart(e) {
+            if(e.type === 'touchstart') e.preventDefault();
+            isDragging = true;
+            let clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            let clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            startX = clientX - currentX;
+            startY = clientY - currentY;
+        }
+
+        function dragMove(e) {
+            if(!isDragging) return;
+            let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            currentX = clientX - startX;
+            currentY = clientY - startY;
+
+            const maxX = window.innerWidth - spiderHud.offsetWidth - 10;
+            const maxY = window.innerHeight - spiderHud.offsetHeight - 10;
+            currentX = Math.max(10, Math.min(currentX, maxX > 10 ? maxX : 10));
+            currentY = Math.max(10, Math.min(currentY, maxY > 10 ? maxY : 10));
+
+            spiderHud.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            spiderHud.style.left = '0';
+            spiderHud.style.top = '0';
+        }
+
+        function dragEnd() {
+            isDragging = false;
+        }
+
+        let hudVisible = true;
+        hudToggleBtn.addEventListener('click', () => {
+            initAudio();
+            hudVisible = !hudVisible;
+            if(hudVisible) {
+                spiderHud.classList.remove('minimized');
+                hudToggleBtn.classList.add('active-glow');
+            } else {
+                spiderHud.classList.add('minimized');
+                hudToggleBtn.classList.remove('active-glow');
+            }
+        });
+
+        function loadSiteInFrame(url) {
+            if (!url || url === 'about:blank') return;
+            currentSiteUrl = url;
+            isFrameLoading = true;
+            clearTimeout(loadTimer);
+            clearAutoReload();
+
+            const oldObj = document.getElementById('fallback-object');
+            if (oldObj) oldObj.remove();
+            elGameFrame.style.display = '';
+            elErrorOverlay.classList.add('hidden');
+
+            elLoadingOverlay.classList.remove('hidden', 'fade-out');
+            elLoadMethodText.textContent = 'Calibrating quantum portal...';
+
+            elGameFrame.setAttribute('sandbox',
+                'allow-scripts allow-same-origin allow-forms allow-popups ' +
+                'allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation ' +
+                'allow-modals allow-downloads allow-presentation'
+            );
+            elGameFrame.src = 'about:blank';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    elGameFrame.src = url;
+                });
+            });
+
+            loadTimer = setTimeout(() => {
+                if (!isFrameLoading) return;
+                elLoadMethodText.textContent = 'Engaging secondary web transport...';
+                elGameFrame.removeAttribute('sandbox');
+                elGameFrame.src = 'about:blank';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        elGameFrame.src = url;
+                    });
+                });
+
+                loadTimer = setTimeout(() => {
+                    if (!isFrameLoading) return;
+                    tryObjectFallback(url);
+                }, 10000);
+            }, 12000);
+        }
+
+        function tryObjectFallback(url) {
+            elLoadMethodText.textContent = 'Direct embedding mode active...';
+            elGameFrame.style.display = 'none';
+
+            var container = document.getElementById('frame-container');
+            var obj = document.createElement('object');
+            obj.id = 'fallback-object';
+            obj.data = url;
+            obj.type = 'text/html';
+            obj.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:1;background:#020306;';
+            container.insertBefore(obj, elLoadingOverlay);
+
+            let objLoaded = false;
+            obj.addEventListener('load', () => {
+                objLoaded = true;
+                isFrameLoading = false;
+                clearTimeout(loadTimer);
+                fadeOutLoading();
+                startAutoReload();
+            });
+
+            loadTimer = setTimeout(() => {
+                if (!objLoaded && isFrameLoading) {
+                    obj.remove();
+                    elGameFrame.style.display = '';
+                    showFrameError(url);
+                }
+            }, 8000);
+        }
+
+        elGameFrame.addEventListener('load', () => {
+            const src = elGameFrame.src || elGameFrame.getAttribute('src');
+            if (!src || src === 'about:blank' || !isFrameLoading) return;
+            isFrameLoading = false;
+            clearTimeout(loadTimer);
+            fadeOutLoading();
+            startAutoReload();
+        });
+
+        elGameFrame.addEventListener('error', () => {
+            if (isFrameLoading && currentSiteUrl) showFrameError(currentSiteUrl);
+        });
+
+        function fadeOutLoading() {
+            elLoadingOverlay.classList.add('fade-out');
+            setTimeout(() => {
+                elLoadingOverlay.classList.add('hidden');
+                elLoadingOverlay.classList.remove('fade-out');
+            }, 400);
+        }
+
+        elNewTabFloatBtn.onclick = function() {
+            if (currentSiteUrl) window.open(currentSiteUrl, '_blank');
+        };
+
+        function showFrameError(url) {
+            isFrameLoading = false;
+            clearTimeout(loadTimer);
+            clearAutoReload();
+            elLoadingOverlay.classList.add('hidden', 'fade-out');
+            elErrorOverlay.classList.remove('hidden');
+
+            document.getElementById('open-new-tab-btn').onclick = () => window.open(url, '_blank');
+            document.getElementById('retry-load-btn').onclick = () => {
+                elErrorOverlay.classList.add('hidden');
+                loadSiteInFrame(url);
+            };
+        }
+
+        function startAutoReload() {
+            clearAutoReload();
+            const interval = (Math.floor(Math.random() * 31) + 50) * 1000;
+            const startTime = Date.now();
+
+            autoReloadCountdown = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const pct = Math.min((elapsed / interval) * 100, 100);
+                elReloadBar.style.width = pct + '%';
+            }, 1000);
+
+            autoReloadTimer = setTimeout(() => {
+                clearAutoReload();
+                if (currentSiteUrl && !isFrameLoading) {
+                    try {
+                        elGameFrame.contentWindow.location.reload();
+                    } catch(e) {
+                        elGameFrame.src = currentSiteUrl;
+                    }
+                    startAutoReload();
+                }
+            }, interval);
+        }
+
+        function clearAutoReload() {
+            clearTimeout(autoReloadTimer);
+            clearInterval(autoReloadCountdown);
+            autoReloadTimer = null;
+            autoReloadCountdown = null;
+            if (elReloadBar) elReloadBar.style.width = '0%';
+        }
+
+        // 3D Holographic Component Hover Tilt
+        const signalStage = document.getElementById('spider-signal-stage');
+        if (signalStage) {
+            signalStage.addEventListener('mousemove', (e) => {
+                const rect = signalStage.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -6;
+                const rotateY = ((x - centerX) / centerX) * 6;
+                signalStage.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(8px)`;
+            });
+
+            signalStage.addEventListener('mouseleave', () => {
+                signalStage.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
+            });
+        }
+    </script>
+</body>
+</html>

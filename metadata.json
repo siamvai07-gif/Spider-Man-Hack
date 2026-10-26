@@ -1,0 +1,6 @@
+{
+  "name": "WOLFSTREETx Cyber HUD & Admin Hub",
+  "description": "Ultra-premium AMOLED holographic cyber radar HUD with 3D animated signal display and realtime synchronization admin center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

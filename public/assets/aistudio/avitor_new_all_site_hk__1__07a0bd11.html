@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WOLFSTREETx - Holographic Android Core</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { 
+            --bg-base: #02040a; 
+            --bg-surface: rgba(6, 12, 26, 0.82);
+            --bg-glass: rgba(10, 18, 38, 0.72);
+            --accent-cyan: #00f2fe; 
+            --accent-blue: #4facfe;
+            --accent-neon: #00ffcc;
+            --accent-magenta: #f355a2;
+            --accent-violet: #8a2be2;
+            --text-primary: #f0f6fc; 
+            --text-secondary: #8b9bb4;
+            --text-muted: #52627a;
+            --border-glow: rgba(0, 242, 254, 0.35);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --shadow-hologram: 0 0 50px rgba(0, 242, 254, 0.25), 0 0 25px rgba(243, 85, 162, 0.15), inset 0 0 30px rgba(0, 242, 254, 0.08);
+            --radius-app: 24px;
+            --radius-hud: 20px;
+            --radius-chip: 12px;
+        }
+        
+        * { 
+            box-sizing: border-box; 
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: var(--bg-base);
+            color: var(--text-primary); 
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 3D Cosmic Holographic Aurora Background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: -40%;
+            width: 180%;
+            height: 180%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 80% 70%, rgba(243, 85, 162, 0.1) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.08) 0%, transparent 55%),
+                radial-gradient(circle at 75% 20%, rgba(0, 255, 204, 0.09) 0%, transparent 40%);
+            animation: cosmicAurora 24s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Ambient floating light dust particles */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(1.5px 1.5px at 15% 25%, rgba(0, 242, 254, 0.5) 0%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 85% 15%, rgba(243, 85, 162, 0.45) 0%, transparent 100%),
+                radial-gradient(1px 1px at 35% 70%, rgba(0, 255, 204, 0.4) 0%, transparent 100%),
+                radial-gradient(2px 2px at 65% 45%, rgba(79, 172, 254, 0.4) 0%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 25% 85%, rgba(138, 43, 226, 0.35) 0%, transparent 100%),
+                radial-gradient(1px 1px at 75% 80%, rgba(0, 242, 254, 0.35) 0%, transparent 100%);
+            background-size: 150% 150%;
+            animation: particleFloat 18s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.7;
+        }
+
+        @keyframes cosmicAurora {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.08) rotate(3deg); }
+            100% { transform: scale(1.02) rotate(-2deg); }
+        }
+
+        @keyframes particleFloat {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+        
+        #game-frame { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            z-index: 1; 
+            background: #030712;
+        }
+        
+        .overlay-screen { 
+            position: fixed; 
+            z-index: 9999; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(2, 4, 10, 0.95); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* ==========================================================
+           ANDROID HOLOGRAPHIC FLOATING TOGGLE (FAB)
+           ========================================================== */
+        #panel-toggle {
+            position: absolute;
+            z-index: 110;
+            top: 18px;
+            left: 18px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, rgba(8, 16, 36, 0.88), rgba(16, 26, 56, 0.75));
+            border: 1.5px solid var(--accent-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.35rem;
+            color: var(--accent-cyan);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.6),
+                0 0 25px rgba(0, 242, 254, 0.35),
+                inset 0 0 15px rgba(0, 242, 254, 0.2);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            outline: none;
+        }
+        
+        #panel-toggle::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px dashed rgba(0, 242, 254, 0.4);
+            animation: spinCW 14s linear infinite;
+            pointer-events: none;
+        }
+
+        #panel-toggle:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.7),
+                0 0 35px rgba(0, 242, 254, 0.6),
+                inset 0 0 20px rgba(0, 242, 254, 0.3);
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+        
+        #panel-toggle:active {
+            transform: scale(0.92);
+        }
+        
+        #panel-toggle.panel-open {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.2));
+            box-shadow: 
+                0 8px 25px rgba(0, 242, 254, 0.4),
+                inset 0 0 20px rgba(0, 242, 254, 0.25);
+            color: #ffffff;
+        }
+
+        #panel-toggle.panel-open i {
+            transform: rotate(90deg);
+        }
+
+        #panel-toggle i {
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ==========================================================
+           ULTRA PREMIUM 3D HOLOGRAPHIC HACKER HUD PANEL
+           ========================================================== */
+        #hacker-panel { 
+            position: absolute; 
+            z-index: 105; 
+            top: 18px; 
+            left: 18px; 
+            width: 320px;
+            max-width: calc(100vw - 36px);
+            background: var(--bg-surface);
+            border: 1.5px solid var(--border-glow);
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.85),
+                0 0 45px rgba(0, 242, 254, 0.2),
+                0 0 25px rgba(243, 85, 162, 0.1),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2),
+                inset 0 0 35px rgba(0, 242, 254, 0.08);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            border-radius: var(--radius-app); 
+            overflow: hidden;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: top left;
+            transform: scale(1) translateZ(0);
+            perspective: 1000px;
+        }
+        
+        #hacker-panel.hidden-panel {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.75) translateY(-20px) translateZ(0);
+        }
+        
+        /* Android Pill Drag Handle with Telemetry */
+        #drag-handle { 
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.14), rgba(138, 43, 226, 0.08));
+            padding: 12px 14px; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--accent-cyan); 
+            font-family: 'Orbitron', monospace;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: grab; 
+            border-bottom: 1px solid rgba(0, 242, 254, 0.2);
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background 0.3s;
+        }
+
+        .drag-handle-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-status-led {
+            width: 7px;
+            height: 7px;
+            background: var(--accent-neon);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-neon);
+            animation: pulseGlow 1.8s infinite;
+        }
+
+        .drag-pill-indicator {
+            width: 32px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 2px;
+            transition: background 0.2s;
+        }
+
+        #drag-handle:hover .drag-pill-indicator {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+        
+        #drag-handle:active { 
+            cursor: grabbing;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(138, 43, 226, 0.15));
+        }
+        
+        .panel-content { 
+            padding: 16px 14px 14px; 
+        }
+
+        /* ==========================================================
+           3D SIGNAL CORE CENTERPIECE
+           ========================================================== */
+        .signal-box {
+            position: relative;
+            width: 100%;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+            border-radius: var(--radius-hud);
+            background: #030712;
+            border: 1px solid rgba(0, 242, 254, 0.25);
+            box-shadow: 
+                inset 0 0 35px rgba(0, 242, 254, 0.12),
+                inset 0 0 15px rgba(243, 85, 162, 0.08),
+                0 10px 30px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 800px;
+        }
+
+        /* Signal Background Image Layers with Crossfade */
+        .signal-bg-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .signal-bg-default {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.08) 0%, rgba(3, 7, 18, 0.85) 75%);
+            transition: opacity 0.7s ease;
+            z-index: 1;
+        }
+
+        .signal-bg-img {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(1.02);
+            will-change: opacity, transform;
+            z-index: 2;
+        }
+
+        .signal-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(2, 4, 10, 0.45) 0%, rgba(2, 4, 10, 0.86) 85%),
+                linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, rgba(243, 85, 162, 0.08) 100%);
+            backdrop-filter: blur(1.5px);
+            -webkit-backdrop-filter: blur(1.5px);
+            box-shadow: inset 0 0 35px rgba(0, 242, 254, 0.18);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* 3D Holographic Animated Core Elements (Floating OVER Image) */
+        .signal-core-3d-wrapper {
+            position: relative;
+            z-index: 5;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-style: preserve-3d;
+        }
+
+        /* Gyro Ring 1: Clockwise Outer Orbit */
+        .gyro-ring-outer {
+            position: absolute;
+            width: 194px;
+            height: 194px;
+            border-radius: 50%;
+            border: 1.5px dashed rgba(0, 242, 254, 0.45);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+            animation: spinCW 22s linear infinite;
+            pointer-events: none;
+        }
+
+        /* Gyro Ring 2: Counter-Clockwise Turbine Blade Ring */
+        .gyro-ring-turbine {
+            position: absolute;
+            width: 172px;
+            height: 172px;
+            border-radius: 50%;
+            border: 1px solid rgba(243, 85, 162, 0.3);
+            animation: spinCCW 14s linear infinite;
+            pointer-events: none;
+        }
+
+        .turbine-blade {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 14px;
+            background: linear-gradient(to top, rgba(0, 242, 254, 0.8), transparent);
+            transform-origin: 50% 86px;
+        }
+
+        .tb-1 { transform: translate(-50%, -86px) rotate(0deg); }
+        .tb-2 { transform: translate(-50%, -86px) rotate(30deg); }
+        .tb-3 { transform: translate(-50%, -86px) rotate(60deg); }
+        .tb-4 { transform: translate(-50%, -86px) rotate(90deg); }
+        .tb-5 { transform: translate(-50%, -86px) rotate(120deg); }
+        .tb-6 { transform: translate(-50%, -86px) rotate(150deg); }
+        .tb-7 { transform: translate(-50%, -86px) rotate(180deg); }
+        .tb-8 { transform: translate(-50%, -86px) rotate(210deg); }
+        .tb-9 { transform: translate(-50%, -86px) rotate(240deg); }
+        .tb-10 { transform: translate(-50%, -86px) rotate(270deg); }
+        .tb-11 { transform: translate(-50%, -86px) rotate(300deg); }
+        .tb-12 { transform: translate(-50%, -86px) rotate(330deg); }
+
+        /* Gyro Ring 3: Angled 3D Inner Particle Orbit */
+        .gyro-ring-particles {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(0, 242, 254, 0.2);
+            animation: spinCW 8s linear infinite;
+            pointer-events: none;
+        }
+
+        .orbit-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 10px #00f2fe, 0 0 16px #00ffcc;
+        }
+
+        .op-1 { top: -3px; left: 50%; transform: translateX(-50%); }
+        .op-2 { bottom: -3px; left: 50%; transform: translateX(-50%); background: #f355a2; box-shadow: 0 0 10px #f355a2, 0 0 16px #8a2be2; }
+        .op-3 { top: 50%; right: -3px; transform: translateY(-50%); }
+
+        /* Central Glass/Holographic Lens */
+        .central-glass-lens {
+            position: absolute;
+            width: 126px;
+            height: 126px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, rgba(0, 242, 254, 0.22) 0%, rgba(138, 43, 226, 0.12) 50%, rgba(3, 7, 18, 0.95) 85%);
+            border: 1.5px solid rgba(0, 242, 254, 0.65);
+            box-shadow: 
+                0 0 35px rgba(0, 242, 254, 0.35),
+                inset 0 0 25px rgba(0, 242, 254, 0.25),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Glass sweep reflection */
+        .central-glass-lens::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 12px;
+            right: 12px;
+            height: 48px;
+            border-radius: 50px 50px 0 0;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.22), transparent);
+            pointer-events: none;
+        }
+
+        /* Center Content Display */
+        .core-display-content {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+            max-width: 120px;
+        }
+
+        .signal-label {
+            font-size: 0.64rem;
+            text-transform: uppercase;
+            letter-spacing: 1.8px;
+            color: rgba(0, 242, 254, 0.85);
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .signal-label::before {
+            content: '';
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background: var(--accent-neon);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--accent-neon);
+        }
+        
+        #signal-val { 
+            font-size: clamp(2.3rem, 7.5vw, 3rem); 
+            font-weight: 900;
+            font-family: 'Orbitron', monospace;
+            color: #ffffff;
+            text-shadow: 
+                0 0 10px rgba(0, 242, 254, 0.8),
+                0 0 20px rgba(0, 242, 254, 0.6),
+                0 0 35px rgba(0, 242, 254, 0.3),
+                0 2px 8px rgba(0, 0, 0, 0.9);
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            letter-spacing: 1px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 10;
+            filter: drop-shadow(0 0 14px rgba(0, 242, 254, 0.5));
+            word-wrap: break-word;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        #signal-val.text-mode {
+            font-size: clamp(0.85rem, 3.2vw, 1.05rem);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            color: var(--accent-neon);
+            text-shadow: 0 0 12px rgba(0, 255, 204, 0.8);
+            letter-spacing: 0.5px;
+            line-height: 1.35;
+            padding: 4px;
+            animation: textPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 0.9; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(0, 255, 204, 0.7)); }
+        }
+        
+        /* 3D Holographic Signal Change Pulse Animation */
+        #signal-val.pulse {
+            animation: signalHoloPulse 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes signalHoloPulse {
+            0% {
+                transform: scale(1) translateZ(0);
+                filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.5));
+            }
+            35% {
+                transform: scale(1.22) translateZ(28px);
+                color: #00ffff;
+                filter: drop-shadow(0 0 35px rgba(0, 242, 254, 1)) drop-shadow(0 0 45px rgba(243, 85, 162, 0.6));
+                text-shadow: 
+                    0 0 15px rgba(0, 242, 254, 1),
+                    0 0 30px rgba(0, 242, 254, 0.9),
+                    0 0 50px rgba(243, 85, 162, 0.8);
+            }
+            70% {
+                transform: scale(1.06) translateZ(10px);
+                filter: drop-shadow(0 0 20px rgba(0, 242, 254, 0.7));
+            }
+            100% {
+                transform: scale(1) translateZ(0);
+                filter: drop-shadow(0 0 14px rgba(0, 242, 254, 0.5));
+            }
+        }
+
+        @keyframes spinCW {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spinCCW {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+
+        /* ==========================================================
+           ANDROID HOLOGRAPHIC TOOL BUTTONS
+           ========================================================== */
+        .tools {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tool-btn { 
+            width: 100%; 
+            padding: 12px 14px; 
+            background: linear-gradient(135deg, rgba(8, 16, 36, 0.8), rgba(16, 26, 52, 0.6));
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary); 
+            cursor: pointer; 
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.92rem; 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: var(--radius-chip);
+            font-weight: 700;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 
+                0 4px 14px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            outline: none;
+        }
+
+        .tool-btn-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tool-btn-left i {
+            font-size: 1rem;
+            color: var(--accent-cyan);
+            width: 20px;
+            text-align: center;
+            transition: transform 0.25s;
+        }
+
+        .tool-badge-status {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            letter-spacing: 1px;
+            transition: all 0.25s;
+        }
+        
+        .tool-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.15), transparent);
+            transition: left 0.45s ease;
+            z-index: 1;
+        }
+        
+        .tool-btn:hover {
+            border-color: rgba(0, 242, 254, 0.5);
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.12), rgba(16, 26, 52, 0.8));
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.45),
+                0 0 25px rgba(0, 242, 254, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .tool-btn:hover .tool-btn-left i {
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 6px var(--accent-cyan));
+        }
+
+        .tool-btn:hover::before {
+            left: 100%;
+        }
+        
+        .tool-btn.active { 
+            border-color: var(--accent-cyan);
+            color: #ffffff; 
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.15));
+            box-shadow: 
+                0 8px 25px rgba(0, 242, 254, 0.35),
+                inset 0 0 20px rgba(0, 242, 254, 0.2),
+                0 0 35px rgba(0, 242, 254, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .tool-btn.active .tool-btn-left i {
+            color: var(--accent-neon);
+            filter: drop-shadow(0 0 8px var(--accent-neon));
+        }
+
+        .tool-btn.active .tool-badge-status {
+            background: rgba(0, 255, 204, 0.15);
+            color: var(--accent-neon);
+            border-color: var(--accent-neon);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+
+        .tool-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+        
+        .tool-btn:disabled { 
+            opacity: 0.35; 
+            cursor: not-allowed;
+            border-color: rgba(255, 255, 255, 0.05);
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* ==========================================================
+           HOLOGRAPHIC LOGIN & AUTH OVERLAY
+           ========================================================== */
+        #login-box { 
+            padding: 30px 24px; 
+            background: var(--bg-surface);
+            border: 1.5px solid var(--border-glow);
+            border-radius: var(--radius-app); 
+            text-align: center;
+            box-shadow: var(--shadow-hologram);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            width: 90%;
+            max-width: 380px;
+            animation: appEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .login-cyber-avatar {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 14px;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(243, 85, 162, 0.12));
+            border: 1.5px solid var(--accent-cyan);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: var(--accent-cyan);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.35);
+        }
+        
+        #login-box h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.7rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #f355a2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            margin-bottom: 4px;
+        }
+
+        .auth-protocol-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .login-input-group {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .login-input-group i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            transition: color 0.25s;
+        }
+        
+        #login-box input { 
+            padding: 13px 14px 13px 42px; 
+            background: rgba(3, 7, 18, 0.9);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff; 
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            border-radius: var(--radius-chip);
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+            outline: none;
+        }
+        
+        #login-box input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        #login-box input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 
+                0 0 0 3px rgba(0, 242, 254, 0.15),
+                0 0 25px rgba(0, 242, 254, 0.3);
+        }
+
+        .login-input-group:focus-within i {
+            color: var(--accent-cyan);
+        }
+        
+        #login-box button { 
+            padding: 14px 24px; 
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.18));
+            color: #ffffff; 
+            border: 1.5px solid var(--accent-cyan);
+            cursor: pointer; 
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 2px;
+            width: 100%;
+            border-radius: var(--radius-chip);
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-size: 0.92rem;
+            box-shadow: 0 8px 24px rgba(0, 242, 254, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            outline: none;
+        }
+        
+        #login-box button:hover {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.4), rgba(79, 172, 254, 0.3));
+            box-shadow: 0 12px 30px rgba(0, 242, 254, 0.45);
+            transform: translateY(-2px);
+        }
+        
+        #login-box button:active {
+            transform: translateY(1px) scale(0.98);
+        }
+        
+        #login-error { 
+            color: #ff2a5f; 
+            margin-top: 12px; 
+            font-size: 0.85rem;
+            letter-spacing: 0.8px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        /* ==========================================================
+           STATUS TOAST CAPSULE
+           ========================================================== */
+        #status-msg { 
+            position: absolute; 
+            bottom: 24px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 120; 
+            background: rgba(3, 7, 18, 0.94); 
+            color: var(--accent-neon); 
+            padding: 10px 22px; 
+            border: 1.5px solid var(--accent-neon);
+            border-radius: 30px; 
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+            pointer-events: none; 
+            opacity: 0; 
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.6),
+                0 0 25px rgba(0, 255, 204, 0.4);
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        /* ==========================================================
+           VADIFAY HOLOGRAPHIC RETICLE & HUD
+           ========================================================== */
+        #cursor-icon { 
+            position: fixed; 
+            z-index: 99999; 
+            pointer-events: none; 
+            width: 44px; 
+            height: 44px; 
+            border: 2px solid var(--accent-cyan); 
+            border-radius: 50%; 
+            top: 0; 
+            left: 0; 
+            transform: translate3d(calc(var(--cx, -100px) - 50%), calc(var(--cy, -100px) - 50%), 0); 
+            will-change: transform; 
+            transition: opacity 0.2s ease;
+            box-shadow: 
+                0 0 20px rgba(0, 242, 254, 0.6),
+                0 0 35px rgba(0, 242, 254, 0.3),
+                inset 0 0 15px rgba(0, 242, 254, 0.4);
+            background: radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.15), transparent 70%);
+        }
+
+        #cursor-icon::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 8px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 6px var(--accent-cyan);
+        }
+
+        #cursor-icon::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 8px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 6px var(--accent-cyan);
+        }
+        
+        #cursor-msg { 
+            position: absolute; 
+            top: 48px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: rgba(3, 7, 18, 0.95);
+            color: var(--accent-neon); 
+            padding: 8px 16px; 
+            font-size: 0.8rem; 
+            font-weight: 700;
+            white-space: nowrap; 
+            border: 1.5px solid var(--accent-cyan);
+            border-radius: 8px;
+            box-shadow: 
+                0 0 20px rgba(0, 242, 254, 0.45),
+                0 6px 18px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .pulse { animation: cursorPulseAnim 0.8s infinite; }
+        
+        @keyframes cursorPulseAnim { 
+            0% { 
+                transform: translate3d(calc(var(--cx) - 50%), calc(var(--cy) - 50%), 0) scale(1); 
+                box-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
+            } 
+            50% { 
+                transform: translate3d(calc(var(--cx) - 50%), calc(var(--cy) - 50%), 0) scale(1.35); 
+                box-shadow: 0 0 35px rgba(0, 242, 254, 0.9), 0 0 50px rgba(243, 85, 162, 0.5);
+            } 
+            100% { 
+                transform: translate3d(calc(var(--cx) - 50%), calc(var(--cy) - 50%), 0) scale(1); 
+                box-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
+            } 
+        }
+        
+        .error-text { 
+            color: #ff2a5f; 
+            font-size: 1.8rem;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 42, 95, 0.6);
+        }
+
+        .reconnect-subtext {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        /* ==========================================================
+           IFRAME LOADING SYSTEM
+           ========================================================== */
+        #frame-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            background: rgba(2, 4, 10, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading-overlay.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-ring {
+            width: 64px;
+            height: 64px;
+            border: 3px solid rgba(0, 242, 254, 0.15);
+            border-top: 3px solid var(--accent-cyan);
+            border-right: 3px solid var(--accent-magenta);
+            border-radius: 50%;
+            animation: spinCW 1s linear infinite;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.35);
+        }
+
+        .loader-text {
+            margin-top: 22px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            letter-spacing: 3px;
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+            animation: loaderPulseText 2s ease-in-out infinite;
+        }
+
+        .loader-subtext {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+        }
+
+        @keyframes loaderPulseText {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        #error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 6;
+            background: rgba(2, 4, 10, 0.96);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .error-container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            padding: 28px 22px;
+            background: var(--bg-surface);
+            border: 1.5px solid rgba(255, 42, 95, 0.4);
+            border-radius: var(--radius-app);
+            box-shadow: 0 0 45px rgba(255, 42, 95, 0.25), inset 0 0 25px rgba(255, 42, 95, 0.08);
+        }
+
+        .error-icon {
+            font-size: 2.8rem;
+            color: #ff2a5f;
+            margin-bottom: 12px;
+            animation: errorPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes errorPulse {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .error-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.35rem;
+            color: #ff2a5f;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 42, 95, 0.4);
+        }
+
+        .error-desc {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .error-url {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            margin-bottom: 18px;
+            word-break: break-all;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-family: monospace;
+        }
+
+        .error-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.12));
+            border: 1.5px solid var(--accent-cyan);
+            color: #ffffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.84rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: var(--radius-chip);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .error-action-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.35), rgba(79, 172, 254, 0.25));
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .retry-btn {
+            background: rgba(255, 42, 95, 0.1);
+            border-color: rgba(255, 42, 95, 0.5);
+            color: #ff2a5f;
+        }
+
+        .retry-btn:hover {
+            background: rgba(255, 42, 95, 0.2);
+            box-shadow: 0 0 25px rgba(255, 42, 95, 0.35);
+        }
+
+        #newtab-float-btn {
+            position: absolute;
+            bottom: 18px;
+            right: 18px;
+            z-index: 10;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            border: 1.5px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 254, 0.35);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            outline: none;
+        }
+
+        #newtab-float-btn:hover {
+            background: rgba(0, 242, 254, 0.25);
+            box-shadow: 0 0 35px rgba(0, 242, 254, 0.6);
+            transform: scale(1.12) translateY(-2px);
+            color: #ffffff;
+        }
+
+        #reload-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            z-index: 10;
+            transition: width 1s linear;
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.7);
+            pointer-events: none;
+        }
+
+        @media (max-width: 480px) {
+            #panel-toggle {
+                width: 48px;
+                height: 48px;
+                top: 14px;
+                left: 14px;
+            }
+
+            #hacker-panel {
+                width: 290px;
+                top: 14px;
+                left: 14px;
+            }
+
+            .signal-core-3d-wrapper {
+                width: 175px;
+                height: 175px;
+            }
+
+            .gyro-ring-outer {
+                width: 170px;
+                height: 170px;
+            }
+
+            .gyro-ring-turbine {
+                width: 150px;
+                height: 150px;
+            }
+
+            .turbine-blade {
+                transform-origin: 50% 75px;
+            }
+
+            .tb-1 { transform: translate(-50%, -75px) rotate(0deg); }
+            .tb-2 { transform: translate(-50%, -75px) rotate(30deg); }
+            .tb-3 { transform: translate(-50%, -75px) rotate(60deg); }
+            .tb-4 { transform: translate(-50%, -75px) rotate(90deg); }
+            .tb-5 { transform: translate(-50%, -75px) rotate(120deg); }
+            .tb-6 { transform: translate(-50%, -75px) rotate(150deg); }
+            .tb-7 { transform: translate(-50%, -75px) rotate(180deg); }
+            .tb-8 { transform: translate(-50%, -75px) rotate(210deg); }
+            .tb-9 { transform: translate(-50%, -75px) rotate(240deg); }
+            .tb-10 { transform: translate(-50%, -75px) rotate(270deg); }
+            .tb-11 { transform: translate(-50%, -75px) rotate(300deg); }
+            .tb-12 { transform: translate(-50%, -75px) rotate(330deg); }
+
+            .gyro-ring-particles {
+                width: 130px;
+                height: 130px;
+            }
+
+            .central-glass-lens {
+                width: 110px;
+                height: 110px;
+            }
+
+            #signal-val {
+                font-size: clamp(2.1rem, 7vw, 2.6rem);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body::before, body::after, .gyro-ring-outer, .gyro-ring-turbine, .gyro-ring-particles, #panel-toggle::after {
+                animation: none !important;
+            }
+            * {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- CONNECTION LOST OVERLAY -->
+    <div id="reconnect-screen" class="overlay-screen">
+        <i class="fa-solid fa-satellite-dish error-icon"></i>
+        <h2 class="error-text">CONNECTION LOST</h2>
+        <p class="reconnect-subtext">Re-establishing secure telemetry link...</p>
+    </div>
+
+    <!-- USER AUTHENTICATION OVERLAY -->
+    <div id="login-overlay" class="overlay-screen hidden">
+        <div id="login-box">
+            <div class="login-cyber-avatar">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h3>WOLFSTREETx</h3>
+            <p class="auth-protocol-text">User Authentication Protocol</p>
+            <div class="login-input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="sys-pass" placeholder="Enter Access Password" autocomplete="current-password">
+            </div>
+            <button id="sys-login-btn">
+                <i class="fa-solid fa-bolt-lightning"></i> CONNECT
+            </button>
+            <div id="login-error"></div>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION CONTAINER -->
+    <div id="app" class="hidden">
+        <!-- FRAME & GAME LAYER -->
+        <div id="frame-container">
+            <iframe id="game-frame" src="about:blank"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-modals allow-downloads allow-presentation"
+                referrerpolicy="no-referrer"
+                allow="autoplay; fullscreen; encrypted-media"
+            ></iframe>
+            
+            <!-- LOADING OVERLAY -->
+            <div id="loading-overlay" class="hidden">
+                <div class="loader-ring"></div>
+                <div class="loader-text">LOADING SITE</div>
+                <div class="loader-subtext" id="load-method-text">Initializing connection...</div>
+            </div>
+            
+            <!-- ERROR OVERLAY -->
+            <div id="error-overlay" class="hidden">
+                <div class="error-container">
+                    <div class="error-icon"><i class="fa-solid fa-shield-cat"></i></div>
+                    <div class="error-title">SITE BLOCKED</div>
+                    <div class="error-desc">This site has anti-embedding protection active.<br>Open it directly in a new tab to continue.</div>
+                    <div class="error-url" id="error-site-url"></div>
+                    <button id="open-new-tab-btn" class="error-action-btn">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> OPEN IN NEW TAB
+                    </button>
+                    <button id="retry-load-btn" class="error-action-btn retry-btn">
+                        <i class="fa-solid fa-rotate-right"></i> RETRY
+                    </button>
+                </div>
+            </div>
+
+            <!-- NEW TAB FLOATING BUTTON -->
+            <button id="newtab-float-btn" class="hidden" title="Open site in new tab">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </button>
+            <div id="reload-bar"></div>
+        </div>
+        
+        <!-- ANDROID HUD TOGGLE BUTTON (FAB) -->
+        <button id="panel-toggle" title="Toggle Radar HUD">
+            <i class="fa-solid fa-atom"></i>
+        </button>
+        
+        <!-- 3D HOLOGRAPHIC HACKER PANEL -->
+        <div id="hacker-panel">
+            <div id="drag-handle">
+                <div class="drag-handle-left">
+                    <span class="hud-status-led"></span>
+                    <span>WOLFSTREETx HUD</span>
+                </div>
+                <div class="drag-pill-indicator"></div>
+            </div>
+            <div class="panel-content">
+                <!-- 3D SIGNAL CORE CENTERPIECE -->
+                <div class="signal-box">
+                    <!-- Signal Background Image Layer with Crossfade & Glass Holographic Overlay -->
+                    <div class="signal-bg-layer" id="signal-bg-layer">
+                        <div class="signal-bg-default"></div>
+                        <div class="signal-bg-img" id="signal-bg-img-active"></div>
+                        <div class="signal-bg-img" id="signal-bg-img-next"></div>
+                        <div class="signal-bg-overlay"></div>
+                    </div>
+
+                    <!-- 3D Core with Fan/Turbine Rotating OVER Image -->
+                    <div class="signal-core-3d-wrapper">
+                        <!-- Orbit Ring 1 (CW) -->
+                        <div class="gyro-ring-outer"></div>
+
+                        <!-- Turbine Blades Ring 2 (CCW) -->
+                        <div class="gyro-ring-turbine">
+                            <span class="turbine-blade tb-1"></span>
+                            <span class="turbine-blade tb-2"></span>
+                            <span class="turbine-blade tb-3"></span>
+                            <span class="turbine-blade tb-4"></span>
+                            <span class="turbine-blade tb-5"></span>
+                            <span class="turbine-blade tb-6"></span>
+                            <span class="turbine-blade tb-7"></span>
+                            <span class="turbine-blade tb-8"></span>
+                            <span class="turbine-blade tb-9"></span>
+                            <span class="turbine-blade tb-10"></span>
+                            <span class="turbine-blade tb-11"></span>
+                            <span class="turbine-blade tb-12"></span>
+                        </div>
+
+                        <!-- Gyro Particle Orbit Ring 3 (CW) -->
+                        <div class="gyro-ring-particles">
+                            <span class="orbit-particle op-1"></span>
+                            <span class="orbit-particle op-2"></span>
+                            <span class="orbit-particle op-3"></span>
+                        </div>
+
+                        <!-- Central Holographic Lens -->
+                        <div class="central-glass-lens"></div>
+
+                        <!-- Core Center Signal Content -->
+                        <div class="core-display-content">
+                            <div class="signal-label">Live Signal</div>
+                            <span id="signal-val">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANDROID HUD ACTION BUTTONS -->
+                <div class="tools">
+                    <button class="tool-btn" id="tool-aviator">
+                        <span class="tool-btn-left">
+                            <i class="fa-solid fa-plane-up"></i>
+                            <span>Aviator V1</span>
+                        </span>
+                        <span class="tool-badge-status">RADAR</span>
+                    </button>
+                    <button class="tool-btn" id="tool-wingo">
+                        <span class="tool-btn-left">
+                            <i class="fa-solid fa-dice-d20"></i>
+                            <span>Wingo V1</span>
+                        </span>
+                        <span class="tool-badge-status">ALGO</span>
+                    </button>
+                    <button class="tool-btn" id="tool-vadifay">
+                        <span class="tool-btn-left">
+                            <i class="fa-solid fa-fingerprint"></i>
+                            <span>Vadifay (Core)</span>
+                        </span>
+                        <span class="tool-badge-status">CORE</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STATUS TOAST -->
+        <div id="status-msg"></div>
+    </div>
+
+    <!-- VADIFAY RETICLE TRACKER -->
+    <div id="cursor-icon" class="hidden">
+        <div id="cursor-msg"></div>
+    </div>
+
+    <!-- Firebase SDKs (v8.10.1 kept as originally used) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSZBaLewFn4nzMfBwVmi8_2iE95Xu4InQ",
+            authDomain: "nagad-5b149.firebaseapp.com",
+            databaseURL: "https://nagad-5b149-default-rtdb.firebaseio.com",
+            projectId: "nagad-5b149"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Audio System
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        
+        function initAudio() {
+            if(!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const t = audioCtx.currentTime;
+            if(type === 'on') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t + 0.1);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(t);
+                osc.stop(t + 0.1);
+            } else if (type === 'off') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, t);
+                osc.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(t);
+                osc.stop(t + 0.1);
+            } else if (type === 'verify') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, t);
+                gain.gain.setValueAtTime(0.05, t);
+                gain.gain.linearRampToValueAtTime(0.05, t + 0.5);
+                gain.gain.linearRampToValueAtTime(0, t + 0.6);
+                osc.start(t);
+                osc.stop(t + 0.6);
+            } else if (type === 'complete') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, t);
+                osc.frequency.setValueAtTime(554, t + 0.1);
+                osc.frequency.setValueAtTime(659, t + 0.2);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.5);
+                osc.start(t);
+                osc.stop(t + 0.5);
+            }
+        }
+
+        // Shared State
+        let systemData = {};
+        let isAuthenticated = false;
+        let activeTools = new Set(); 
+        let vadifayMsgIndex = 0;
+        let vadifayInterval = null;
+        let isVerifying = false;
+        let hasLinkLoaded = false;
+        let loadTimer = null;
+        let autoReloadTimer = null;
+        let autoReloadCountdown = null;
+        let currentSiteUrl = '';
+        let isFrameLoading = false;
+
+        // UI Elements
+        const elApp = document.getElementById('app');
+        const elLogin = document.getElementById('login-overlay');
+        const elReconnect = document.getElementById('reconnect-screen');
+        const elGameFrame = document.getElementById('game-frame');
+        const elSignal = document.getElementById('signal-val');
+        const elStatus = document.getElementById('status-msg');
+        const elCursor = document.getElementById('cursor-icon');
+        const elCursorMsg = document.getElementById('cursor-msg');
+        const elLoadingOverlay = document.getElementById('loading-overlay');
+        const elErrorOverlay = document.getElementById('error-overlay');
+        const elLoadMethodText = document.getElementById('load-method-text');
+        const elNewTabFloatBtn = document.getElementById('newtab-float-btn');
+        const elReloadBar = document.getElementById('reload-bar');
+        
+        const btnAviator = document.getElementById('tool-aviator');
+        const btnWingo = document.getElementById('tool-wingo');
+        const btnVadifay = document.getElementById('tool-vadifay');
+        const buttons = [btnAviator, btnWingo, btnVadifay];
+
+        function showStatus(msg) {
+            elStatus.innerText = msg;
+            elStatus.style.opacity = '1';
+            setTimeout(() => { elStatus.style.opacity = '0'; }, 2000);
+        }
+
+        function setToolActive(toolId, btn) {
+            initAudio(); 
+            if(activeTools.has(toolId)) {
+                activeTools.delete(toolId);
+                btn.classList.remove('active');
+                playSound('off');
+                disableToolLogic(toolId);
+                return;
+            }
+            
+            activeTools.add(toolId);
+            btn.classList.add('active');
+            playSound('on');
+            enableToolLogic(toolId);
+        }
+
+        btnAviator.addEventListener('click', () => setToolActive('aviator', btnAviator));
+        btnWingo.addEventListener('click', () => setToolActive('wingo', btnWingo));
+        btnVadifay.addEventListener('click', () => setToolActive('vadifay', btnVadifay));
+
+        function disableToolLogic(toolId) {
+            if(toolId === 'vadifay') {
+                elCursor.classList.add('hidden');
+                clearInterval(vadifayInterval);
+            }
+        }
+
+        function enableToolLogic(toolId) {
+            if(toolId === 'aviator') {
+                showStatus('Initializing Aviator...');
+            } else if (toolId === 'wingo') {
+                showStatus('Wingo Ready');
+            } else if (toolId === 'vadifay') {
+                showStatus('Verification Mode Enabled');
+                elCursor.classList.remove('hidden');
+                elCursor.classList.remove('pulse');
+                isVerifying = false;
+                vadifayMsgIndex = 0;
+                updateVadifayMsg();
+                vadifayInterval = setInterval(() => {
+                    if(!isVerifying) {
+                        vadifayMsgIndex = (vadifayMsgIndex + 1) % (systemData.verifyMessages || ["Waiting..."]).length;
+                        updateVadifayMsg();
+                    }
+                }, 2000);
+            }
+        }
+
+        function updateVadifayMsg() {
+            const msgs = systemData.verifyMessages || ["Connect to continue"];
+            elCursorMsg.innerText = msgs[vadifayMsgIndex] || "";
+        }
+
+        // Vadifay Cursor Tracking
+        function updateCursor(clientX, clientY) {
+            elCursor.style.setProperty('--cx', clientX + 'px');
+            elCursor.style.setProperty('--cy', clientY + 'px');
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying) {
+                updateCursor(e.clientX, e.clientY);
+            }
+        });
+        document.addEventListener('touchstart', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying && e.touches.length > 0) {
+                updateCursor(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, {passive: true});
+        document.addEventListener('touchmove', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying && e.touches.length > 0) {
+                updateCursor(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, {passive: true});
+        document.addEventListener('touchend', (e) => {
+            if(activeTools.has('vadifay') && !isVerifying) {
+                initAudio();
+                if(e.target.closest('#hacker-panel') || e.target.closest('#error-overlay') || e.target.closest('#loading-overlay') || e.target.closest('#newtab-float-btn')) return;
+                handleVadifayClick();
+            }
+        });
+
+        // REAL CLICK DETECTION
+        document.addEventListener('click', (e) => {
+            initAudio();
+            if(e.target.closest('#hacker-panel') || e.target.closest('#error-overlay') || e.target.closest('#loading-overlay') || e.target.closest('#newtab-float-btn')) return;
+            handleVadifayClick();
+        });
+
+        window.addEventListener('blur', () => {
+            if(document.activeElement === elGameFrame) {
+                initAudio();
+                handleVadifayClick();
+                window.focus();
+            }
+        });
+
+        function handleVadifayClick() {
+            if(activeTools.has('vadifay') && !isVerifying) {
+                isVerifying = true;
+                playSound('verify');
+                elCursor.classList.add('pulse');
+                
+                elCursorMsg.innerText = "Verifying & Redirecting...";
+                showStatus("Redirecting to Admin URL...");
+                
+                // Premium Mobile Loading State for Redirect
+                const loader = document.getElementById('loading-overlay');
+                const loaderText = document.getElementById('load-method-text');
+                if (loader) {
+                    loader.classList.remove('hidden');
+                    loader.classList.remove('fade-out');
+                    loaderText.innerText = "Authenticating Session...";
+                }
+
+                // Wait a brief moment for the animation to show, then redirect the top window
+                setTimeout(() => {
+                    if(systemData.redirectLink) {
+                        window.location.href = systemData.redirectLink;
+                    } else {
+                        if (loader) loader.classList.add('fade-out');
+                        showStatus('Error: No Redirect Link Set');
+                        isVerifying = false;
+                        elCursor.classList.remove('pulse');
+                        updateVadifayMsg();
+                    }
+                }, 800);
+            }
+        }
+
+        // Signal Background Image Crossfade System
+        let currentSignalImageUrl = "";
+        let isUsingImgActive = true;
+
+        function handleSignalImageUpdate(newUrl) {
+            newUrl = (newUrl || "").trim();
+            if(newUrl === currentSignalImageUrl) return;
+
+            const imgActive = document.getElementById('signal-bg-img-active');
+            const imgNext = document.getElementById('signal-bg-img-next');
+            if(!imgActive || !imgNext) return;
+
+            if(!newUrl) {
+                currentSignalImageUrl = "";
+                imgActive.style.opacity = '0';
+                imgNext.style.opacity = '0';
+                return;
+            }
+
+            const testImg = new Image();
+            testImg.onload = function() {
+                currentSignalImageUrl = newUrl;
+                if(isUsingImgActive) {
+                    imgNext.style.backgroundImage = `url("${newUrl}")`;
+                    imgNext.style.opacity = '1';
+                    imgActive.style.opacity = '0';
+                    isUsingImgActive = false;
+                } else {
+                    imgActive.style.backgroundImage = `url("${newUrl}")`;
+                    imgActive.style.opacity = '1';
+                    imgNext.style.opacity = '0';
+                    isUsingImgActive = true;
+                }
+            };
+            testImg.onerror = function() {
+                console.warn("Failed to load signal background image:", newUrl);
+                currentSignalImageUrl = "";
+                imgActive.style.opacity = '0';
+                imgNext.style.opacity = '0';
+            };
+            testImg.src = newUrl;
+        }
+
+        db.ref('.info/connected').on('value', (snap) => {
+            if(snap.val() === true) {
+                if(isAuthenticated) {
+                    elReconnect.classList.add('hidden');
+                } else {
+                    elReconnect.classList.add('hidden');
+                    elLogin.classList.remove('hidden');
+                }
+            } else {
+                elReconnect.classList.remove('hidden');
+                elLogin.classList.add('hidden');
+                elApp.classList.add('hidden');
+            }
+        });
+
+        db.ref('system').on('value', (snap) => {
+            systemData = snap.val() || {};
+            
+            if(systemData.toolState === false) {
+                buttons.forEach(b => { b.disabled = true; b.classList.remove('active'); });
+                if(activeTools.has('vadifay')) disableToolLogic('vadifay');
+                activeTools.clear();
+            } else {
+                buttons.forEach(b => b.disabled = false);
+            }
+
+            // Signal Background Image Crossfade Update
+            handleSignalImageUpdate(systemData.signalImage);
+
+            // Deposit Mode Logic
+            const isDepositModeOff = systemData.depositMode === false;
+            
+            if(isDepositModeOff) {
+                elSignal.classList.add('text-mode');
+                elSignal.classList.remove('pulse');
+                elSignal.innerText = systemData.depositMessage || "ডিপোজিট করুন সিগন্যাল পেতে";
+            } else {
+                elSignal.classList.remove('text-mode');
+                // Update signal with animation and proper formatting
+                const newSignal = systemData.signal !== undefined ? systemData.signal : "--";
+                if(newSignal !== "--") {
+                    const oldValueStr = elSignal.innerText.replace('x', '');
+                    const oldValue = parseFloat(oldValueStr);
+                    const newValue = parseFloat(newSignal);
+                    
+                    if(!isNaN(oldValue) && !isNaN(newValue) && oldValue !== newValue) {
+                        animateSignal(oldValue, newValue);
+                    } else if(isNaN(oldValue) || oldValueStr === "--" || oldValueStr === systemData.depositMessage) {
+                        elSignal.innerText = parseFloat(newSignal).toFixed(2) + "x";
+                    }
+                } else {
+                    elSignal.innerText = "--";
+                }
+            }
+
+            if(!hasLinkLoaded && systemData.gameLink) {
+                loadSiteInFrame(systemData.gameLink);
+                hasLinkLoaded = true;
+            }
+        });
+        
+        // Signal Animation Function with proper formatting
+        function animateSignal(start, end) {
+            const duration = 600; // milliseconds
+            const startTime = Date.now();
+            
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+            
+            function animate() {
+                const now = Date.now();
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const eased = easeOutCubic(progress);
+                const current = start + (end - start) * eased;
+                
+                elSignal.innerText = current.toFixed(2) + "x";
+                
+                if(progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    elSignal.innerText = end.toFixed(2) + "x";
+                    // Add pulse animation
+                    elSignal.classList.remove('pulse');
+                    void elSignal.offsetWidth; // Trigger reflow
+                    elSignal.classList.add('pulse');
+                    setTimeout(() => elSignal.classList.remove('pulse'), 650);
+                }
+            }
+            
+            animate();
+        }
+
+        function handleUserLogin() {
+            initAudio();
+            const pass = document.getElementById('sys-pass').value;
+            if(pass === systemData.userPassword && pass !== "") {
+                isAuthenticated = true;
+                elLogin.classList.add('hidden');
+                elApp.classList.remove('hidden');
+            } else {
+                document.getElementById('login-error').innerText = "Invalid Password.";
+            }
+        }
+
+        document.getElementById('sys-login-btn').addEventListener('click', handleUserLogin);
+        document.getElementById('sys-pass').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleUserLogin();
+        });
+
+        const panel = document.getElementById('hacker-panel');
+        const handle = document.getElementById('drag-handle');
+        let isDragging = false, startX, startY, currentX = 18, currentY = 18;
+
+        handle.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', dragMove);
+        document.addEventListener('mouseup', dragEnd);
+        handle.addEventListener('touchstart', dragStart, {passive: false});
+        document.addEventListener('touchmove', dragMove, {passive: false});
+        document.addEventListener('touchend', dragEnd);
+
+        function dragStart(e) {
+            if(e.type === 'touchstart') e.preventDefault();
+            isDragging = true;
+            let clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            let clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            startX = clientX - currentX;
+            startY = clientY - currentY;
+        }
+        function dragMove(e) {
+            if(!isDragging) return;
+            let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            currentX = clientX - startX;
+            currentY = clientY - startY;
+            panel.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            panel.style.left = '0';
+            panel.style.top = '0';
+        }
+        function dragEnd() {
+            isDragging = false;
+        }
+
+        // Panel Toggle System
+        const toggleBtn = document.getElementById('panel-toggle');
+        let panelVisible = true;
+        
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            panelVisible = !panelVisible;
+            
+            if(panelVisible) {
+                panel.classList.remove('hidden-panel');
+                toggleBtn.classList.add('panel-open');
+            } else {
+                panel.classList.add('hidden-panel');
+                toggleBtn.classList.remove('panel-open');
+            }
+        });
+
+        // ===== IFRAME LOADING SYSTEM V11 =====
+        function loadSiteInFrame(url) {
+            if (!url || url === 'about:blank') return;
+
+            currentSiteUrl = url;
+            isFrameLoading = true;
+            clearTimeout(loadTimer);
+            clearAutoReload();
+
+            // Clear any previous fallback elements
+            const oldObj = document.getElementById('fallback-object');
+            if (oldObj) oldObj.remove();
+            elGameFrame.style.display = '';
+            elErrorOverlay.classList.add('hidden');
+            elNewTabFloatBtn.classList.add('hidden');
+
+            // Show loading overlay
+            elLoadingOverlay.classList.remove('hidden', 'fade-out');
+            elLoadMethodText.textContent = 'Connecting to site...';
+
+            // Phase 1: Sandboxed load (prevents frame-busting JS)
+            elGameFrame.setAttribute('sandbox',
+                'allow-scripts allow-same-origin allow-forms allow-popups ' +
+                'allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation ' +
+                'allow-modals allow-downloads allow-presentation'
+            );
+            elGameFrame.setAttribute('referrerpolicy', 'no-referrer');
+            elGameFrame.setAttribute('allow', 'autoplay; fullscreen; encrypted-media');
+
+            // Clear iframe first, then load target URL
+            elGameFrame.src = 'about:blank';
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    elGameFrame.src = url;
+                });
+            });
+
+            // Phase 2 timeout: if load event hasn't fired in 12s,
+            // retry without sandbox (some sites need full navigation)
+            loadTimer = setTimeout(function() {
+                if (!isFrameLoading) return;
+
+                elLoadMethodText.textContent = 'Retrying alternative method...';
+                elGameFrame.removeAttribute('sandbox');
+                elGameFrame.src = 'about:blank';
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        elGameFrame.src = url;
+                    });
+                });
+
+                // Phase 3 timeout: if still no load, try <object> embed
+                loadTimer = setTimeout(function() {
+                    if (!isFrameLoading) return;
+                    tryObjectFallback(url);
+                }, 10000);
+            }, 12000);
+        }
+
+        // Object/embed fallback — bypasses some CSP frame-src rules
+        function tryObjectFallback(url) {
+            elLoadMethodText.textContent = 'Trying embed fallback...';
+            elGameFrame.style.display = 'none';
+
+            var container = document.getElementById('frame-container');
+            var obj = document.createElement('object');
+            obj.id = 'fallback-object';
+            obj.data = url;
+            obj.type = 'text/html';
+            obj.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:1;background:#02040a;';
+            container.insertBefore(obj, elLoadingOverlay);
+
+            var objLoaded = false;
+            obj.addEventListener('load', function() {
+                objLoaded = true;
+                isFrameLoading = false;
+                clearTimeout(loadTimer);
+                fadeOutLoading();
+                showNewTabButton();
+                startAutoReload();
+            });
+
+            // Final timeout: if object also fails, show error screen
+            loadTimer = setTimeout(function() {
+                if (!objLoaded && isFrameLoading) {
+                    obj.remove();
+                    elGameFrame.style.display = '';
+                    showFrameError(url);
+                }
+            }, 8000);
+        }
+
+        // Handle iframe load event
+        elGameFrame.addEventListener('load', function() {
+            var src = elGameFrame.src || elGameFrame.getAttribute('src');
+            if (!src || src === 'about:blank') return;
+            if (!isFrameLoading) return;
+
+            isFrameLoading = false;
+            clearTimeout(loadTimer);
+            fadeOutLoading();
+            showNewTabButton();
+            startAutoReload();
+        });
+
+        // Handle iframe error event
+        elGameFrame.addEventListener('error', function() {
+            if (isFrameLoading && currentSiteUrl) {
+                showFrameError(currentSiteUrl);
+            }
+        });
+
+        // Fade out loading overlay smoothly
+        function fadeOutLoading() {
+            elLoadingOverlay.classList.add('fade-out');
+            setTimeout(function() {
+                elLoadingOverlay.classList.add('hidden');
+                elLoadingOverlay.classList.remove('fade-out');
+            }, 500);
+        }
+
+        // Show floating "Open in New Tab" button
+        function showNewTabButton() {
+            elNewTabFloatBtn.classList.remove('hidden');
+            elNewTabFloatBtn.onclick = function() {
+                if (currentSiteUrl) window.open(currentSiteUrl, '_blank');
+            };
+        }
+
+        // Show error overlay with action buttons
+        function showFrameError(url) {
+            isFrameLoading = false;
+            clearTimeout(loadTimer);
+            clearAutoReload();
+
+            elLoadingOverlay.classList.add('hidden');
+            elLoadingOverlay.classList.remove('fade-out');
+            elErrorOverlay.classList.remove('hidden');
+
+            document.getElementById('error-site-url').textContent = url;
+
+            document.getElementById('open-new-tab-btn').onclick = function() {
+                window.open(url, '_blank');
+            };
+
+            document.getElementById('retry-load-btn').onclick = function() {
+                elErrorOverlay.classList.add('hidden');
+                loadSiteInFrame(url);
+            };
+
+            showNewTabButton();
+        }
+
+        // Auto-reload system
+        function startAutoReload() {
+            clearAutoReload();
+            var interval = (Math.floor(Math.random() * 31) + 50) * 1000;
+            var startTime = Date.now();
+
+            autoReloadCountdown = setInterval(function() {
+                var elapsed = Date.now() - startTime;
+                var pct = Math.min((elapsed / interval) * 100, 100);
+                elReloadBar.style.width = pct + '%';
+            }, 1000);
+
+            autoReloadTimer = setTimeout(function() {
+                clearAutoReload();
+                if (currentSiteUrl && !isFrameLoading) {
+                    try {
+                        elGameFrame.contentWindow.location.reload();
+                    } catch(e) {
+                        elGameFrame.src = currentSiteUrl;
+                    }
+                    startAutoReload();
+                }
+            }, interval);
+        }
+
+        function clearAutoReload() {
+            clearTimeout(autoReloadTimer);
+            clearInterval(autoReloadCountdown);
+            autoReloadTimer = null;
+            autoReloadCountdown = null;
+            if (elReloadBar) elReloadBar.style.width = '0%';
+        }
+    </script>
+</body>
+</html>
